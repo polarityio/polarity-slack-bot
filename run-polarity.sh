@@ -9,6 +9,7 @@
 #   -e, --env-file PATH   Path to .env file (default: .env)
 #   -c, --ca-file  PATH   Path to extra CA bundle (optional)
 #   -n, --network  MODE   Docker network mode (e.g. host, bridge) (optional; if omitted, no --network flag is passed)
+#   -d, --detach          Run container in background (adds -d to docker run)
 #   -h, --help            Show this help and exit
 #
 # Optional ENV:
@@ -25,6 +26,7 @@ IMAGE_NAME="polarity-bot"
 ENV_FILE=".env"
 CA_FILE=""
 NETWORK_MODE=""
+DETACH=0
 LOG_MAX_SIZE="${LOG_MAX_SIZE:-10m}"
 LOG_MAX_FILE="${LOG_MAX_FILE:-3}"
 
@@ -42,6 +44,10 @@ while [[ $# -gt 0 ]]; do
     -n|--network)
       NETWORK_MODE="$2"
       shift 2
+      ;;
+    -d|--detach)
+      DETACH=1
+      shift
       ;;
     -h|--help)
       usage
@@ -69,6 +75,9 @@ DOCKER_ARGS=(
 
 if [[ -n "${NETWORK_MODE}" ]]; then
   DOCKER_ARGS+=( --network "${NETWORK_MODE}" )
+fi
+if [[ $DETACH -eq 1 ]]; then
+  DOCKER_ARGS+=( -d )
 fi
 
 if [[ -n "${CA_FILE}" ]]; then
