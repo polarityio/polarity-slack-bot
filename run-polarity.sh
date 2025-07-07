@@ -67,6 +67,7 @@ docker build -t "${IMAGE_NAME}" .
 # ── Assemble docker run args ─────────────────────────────────
 DOCKER_ARGS=(
   --rm
+  --name polarity_slack_bot
   --env-file "${ENV_FILE}"
   --log-driver json-file
   --log-opt "max-size=${LOG_MAX_SIZE}"
