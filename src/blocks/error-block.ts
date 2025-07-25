@@ -1,5 +1,5 @@
 import type { KnownBlock } from '@slack/types';
-import { ApiError } from '../polarity';
+import { ApiError } from '../errors/api-error';
 
 /**
  * Build a Slack block set that shows a concise error message together with a

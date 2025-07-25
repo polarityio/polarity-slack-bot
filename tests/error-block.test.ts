@@ -1,5 +1,5 @@
 import { buildErrorBlocks } from '../src/blocks/error-block';
-import { ApiError } from '../src/polarity';
+import { ApiError } from '../src/errors/api-error';
 import type { ActionsBlock, Button } from '@slack/types';
 
 describe('buildErrorBlocks', () => {

@@ -13,6 +13,7 @@ import { createProxyDispatcher } from './proxy';
 import type { LookupResult, LookupResultEntity } from './types';
 import {logger} from "./logger";
 import { HeadersInit } from 'undici-types';
+import { ApiError, ApiErrorMeta } from './errors/api-error';
 
 const DISPATCHER = createProxyDispatcher();
 const POLARITY_URL = `https://${process.env.POLARITY_HOSTNAME}`;
@@ -26,26 +27,7 @@ if (!POLARITY_TOKEN) {
   throw new Error('Environment variable POLARITY_TOKEN is required');
 }
 
-/**
- * Structured error information returned by the Polarity API.
- */
-export interface ApiErrorMeta {
-  [key: string]: unknown;
-}
 
-/**
- * Error thrown when the Polarity API responds with a non-2xx status.
- * Carries both the user-friendly message and the raw metadata.
- */
-export class ApiError extends Error {
-  public readonly meta: ApiErrorMeta;
-
-  constructor(message: string, meta: ApiErrorMeta = {}) {
-    super(message);
-    this.name = 'ApiError';
-    this.meta = meta;
-  }
-}
 
 /**
  * Remove sensitive data (e.g. tokens) from headers before logging.
