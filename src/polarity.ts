@@ -46,8 +46,11 @@ function sanitizeHeaders(headers?: HeadersInit): Record<string, string> | undefi
  * Convert an HTTP error response into a rich {@link ApiError}.
  */
 async function throwIfHttpError(response: Response, url: string, init: RequestInit): Promise<void> {
+  logger.info('In ThrowHttpError');
+  
   if (response.ok) return;
 
+  
   let meta: ApiErrorMeta = {};
   let message = `${response.status} ${response.statusText}`;
 
@@ -224,6 +227,8 @@ export async function lookupText(text: string, integrationId: string): Promise<I
 export async function getRunningIntegrations(): Promise<unknown[]> {
   ignoreTlsErrorsIfNeeded();
 
+  
+  
   const url = new URL(`${POLARITY_URL}/api/integrations`);
   url.searchParams.set('filter[integration.status]', 'running');
   url.searchParams.set('page[size]', '300');
@@ -238,10 +243,11 @@ export async function getRunningIntegrations(): Promise<unknown[]> {
   };
 
   const response = await fetch(url.toString(), requestInit);
+
+  logger.info('Called Fetch');
+  
   await throwIfHttpError(response, url.toString(), requestInit);
 
   const body = (await response.json()) as { data?: unknown[] };
   return body.data ?? [];
 }
-
-export { ApiError, ApiErrorMeta } from './errors/api-error';
