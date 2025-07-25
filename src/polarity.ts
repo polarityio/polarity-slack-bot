@@ -243,3 +243,5 @@ export async function getRunningIntegrations(): Promise<unknown[]> {
   const body = (await response.json()) as { data?: unknown[] };
   return body.data ?? [];
 }
+
+export { ApiError, ApiErrorMeta } from './errors/api-error';

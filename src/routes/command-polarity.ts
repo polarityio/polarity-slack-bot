@@ -7,7 +7,7 @@ import { AllMiddlewareArgs, type SlackCommandMiddlewareArgs } from '@slack/bolt'
 import { LookupResult } from '../types';
 import { createMessenger, type SendFn } from '../utils/slack-messenger';
 import { ProgressBar } from '../blocks/progress-bar';
-import { ApiError } from '../polarity';
+import { ApiError } from '../errors/api-error';
 import { buildErrorBlocks } from '../blocks/error-block';
 
 async function commandPolarity({ ack, command, client }: SlackCommandMiddlewareArgs & AllMiddlewareArgs) {
