@@ -1,3 +1,6 @@
+import { enforceNodeVersion } from './check-node-version';
+enforceNodeVersion();
+
 import dotenv from 'dotenv';
 dotenv.config({ override: true });
 
