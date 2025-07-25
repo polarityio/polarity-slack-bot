@@ -19,7 +19,9 @@ async function commandPolarity({ ack, command, client }: SlackCommandMiddlewareA
   const channelId = command.channel_id;
   const send = createMessenger(client, channelId);
 
-  // Ensure the bot is (or can be) in the channel before proceeding
+  logger.info('Received message from channel ' + channelId);
+  
+  //Ensure the bot is (or can be) in the channel before proceeding
   let needInvite = false;
   try {
     await client.conversations.join({ channel: channelId });
