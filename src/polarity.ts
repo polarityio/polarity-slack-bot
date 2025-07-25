@@ -37,9 +37,30 @@ export class ApiError extends Error {
 }
 
 /**
+ * Remove sensitive data (e.g. tokens) from headers before logging.
+ */
+function sanitizeHeaders(headers?: HeadersInit): Record<string, string> | undefined {
+  if (!headers) return;
+  const all =
+    headers instanceof Headers
+      ? Object.fromEntries(headers.entries())
+      : { ...headers } as Record<string, string>;
+
+  const auth = all.Authorization ?? all.authorization;
+  if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
+    all.Authorization = `Bearer ${auth.slice(7, 11)}…redacted`;
+  }
+  return all;
+}
+
+/**
  * Convert an HTTP error response into a rich {@link ApiError}.
  */
-async function throwIfHttpError(response: Response): Promise<void> {
+async function throwIfHttpError(
+  response: Response,
+  url: string,
+  init: RequestInit
+): Promise<void> {
   if (response.ok) return;
 
   let meta: ApiErrorMeta = {};
@@ -59,7 +80,16 @@ async function throwIfHttpError(response: Response): Promise<void> {
     /* ignore JSON-parse errors */
   }
 
-  throw new ApiError(message, meta);
+  throw new ApiError(message, {
+    ...meta,
+    request: {
+      url,
+      method: init.method ?? 'GET',
+      headers: sanitizeHeaders(init.headers),
+      // body is not part of RequestInit in @types/undici; cast to access it
+      body: (init as { body?: unknown }).body
+    }
+  });
 }
 
 export interface ParsedEntity {
@@ -109,7 +139,8 @@ function ignoreTlsErrorsIfNeeded(): void {
 export async function parseEntities(text: string): Promise<ParsedEntity[]> {
   ignoreTlsErrorsIfNeeded();
 
-  const response = await fetch(`${POLARITY_URL}/api/parsed-entities`, {
+  const url = `${POLARITY_URL}/api/parsed-entities`;
+  const requestInit: RequestInit = {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${POLARITY_TOKEN}`,
@@ -121,9 +152,10 @@ export async function parseEntities(text: string): Promise<ParsedEntity[]> {
       }
     }),
     ...(DISPATCHER ? { dispatcher: DISPATCHER } : {})
-  });
+  };
 
-  await throwIfHttpError(response);
+  const response = await fetch(url, requestInit);
+  await throwIfHttpError(response, url, requestInit);
 
   const body = (await response.json()) as {
     data?: { attributes?: { entities?: ParsedEntity[] } };
@@ -165,7 +197,8 @@ export async function lookup(entities: ParsedEntity[], integrationId: string): P
 
   ignoreTlsErrorsIfNeeded();
 
-  const response = await fetch(`${POLARITY_URL}/api/integrations/${encodeURIComponent(integrationId)}/lookup`, {
+  const url = `${POLARITY_URL}/api/integrations/${encodeURIComponent(integrationId)}/lookup`;
+  const requestInit: RequestInit = {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${POLARITY_TOKEN}`,
@@ -180,9 +213,10 @@ export async function lookup(entities: ParsedEntity[], integrationId: string): P
       }
     }),
     ...(DISPATCHER ? { dispatcher: DISPATCHER } : {})
-  });
+  };
 
-  await throwIfHttpError(response);
+  const response = await fetch(url, requestInit);
+  await throwIfHttpError(response, url, requestInit);
 
   const body = (await response.json()) as {
     data?: { attributes?: { results?: LookupResult[]; entities?: LookupResultEntity[] } };
@@ -222,16 +256,17 @@ export async function getRunningIntegrations(): Promise<unknown[]> {
   url.searchParams.set('filter[integration.status]', 'running');
   url.searchParams.set('page[size]', '300');
 
-  const response = await fetch(url.toString(), {
+  const requestInit: RequestInit = {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${POLARITY_TOKEN}`,
       'Content-Type': 'application/vnd.api+json'
     },
     ...(DISPATCHER ? { dispatcher: DISPATCHER } : {})
-  });
+  };
 
-  await throwIfHttpError(response);
+  const response = await fetch(url.toString(), requestInit);
+  await throwIfHttpError(response, url.toString(), requestInit);
 
   const body = (await response.json()) as { data?: unknown[] };
   return body.data ?? [];

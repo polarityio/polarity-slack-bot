@@ -22,7 +22,12 @@ app.action('show_details', actionShowDetails);
 app.action('show_error_details', actionShowErrorDetails);
 
 (async () => {
-  await app.start();
-  await integrationService.load();
-  logger.info('⚡️ Polarity Slack Bot is running!');
+  try {
+    await app.start();
+    await integrationService.load();
+    logger.info('⚡️ Polarity Slack Bot is running!');
+  } catch (err) {
+    logger.error('Startup failed', err);
+    process.exit(1);
+  }
 })();
