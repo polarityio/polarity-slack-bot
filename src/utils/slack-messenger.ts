@@ -1,5 +1,6 @@
 import type { KnownBlock } from '@slack/types';
 import type { WebClient } from '@slack/web-api';
+import { logger } from '../logger';
 
 /**
  * Arguments accepted by the `send` helper returned from {@link createMessenger}.
@@ -97,7 +98,32 @@ export function createMessenger(client: WebClient, channelId: string): SendFn {
     // ──────────────────────────────────────────────────────────────────────────
     // Public message (default)
     // ──────────────────────────────────────────────────────────────────────────
-    const res = await client.chat.postMessage({ channel: channelId, text, blocks });
-    return String(res.ts);
+    try {
+      const res = await client.chat.postMessage({ channel: channelId, text, blocks });
+      return String(res.ts);
+    } catch (err) {
+      // The bot is not in the channel yet → try to join and retry once.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const slackErr = err as { code?: string; data?: { error?: string } };
+      if (
+        slackErr?.code === 'slack_webapi_platform_error' &&
+        slackErr.data?.error === 'not_in_channel'
+      ) {
+        try {
+          // conversations.join covers public & private channels the bot can access
+          // @ts-expect-error – method typing is incomplete in @slack/web-api
+          await client.conversations.join({ channel: channelId });
+        } catch (joinErr) {
+          logger.warn(
+            { channelId, err: joinErr },
+            'Failed to join channel; will still attempt to send the message'
+          );
+        }
+        // Retry posting the message; let any subsequent error bubble up.
+        const res = await client.chat.postMessage({ channel: channelId, text, blocks });
+        return String(res.ts);
+      }
+      throw err;
+    }
   };
 }
