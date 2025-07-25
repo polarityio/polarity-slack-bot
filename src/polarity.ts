@@ -11,7 +11,7 @@
 
 import { createProxyDispatcher } from './proxy';
 import type { LookupResult, LookupResultEntity } from './types';
-import {logger} from "./logger";
+import { logger } from './logger';
 import { HeadersInit } from 'undici-types';
 import { ApiError, ApiErrorMeta } from './errors/api-error';
 
@@ -27,17 +27,13 @@ if (!POLARITY_TOKEN) {
   throw new Error('Environment variable POLARITY_TOKEN is required');
 }
 
-
-
 /**
  * Remove sensitive data (e.g. tokens) from headers before logging.
  */
 function sanitizeHeaders(headers?: HeadersInit): Record<string, string> | undefined {
   if (!headers) return;
   const all =
-    headers instanceof Headers
-      ? Object.fromEntries(headers.entries())
-      : { ...headers } as Record<string, string>;
+    headers instanceof Headers ? Object.fromEntries(headers.entries()) : ({ ...headers } as Record<string, string>);
 
   const auth = all.Authorization ?? all.authorization;
   if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
@@ -49,11 +45,7 @@ function sanitizeHeaders(headers?: HeadersInit): Record<string, string> | undefi
 /**
  * Convert an HTTP error response into a rich {@link ApiError}.
  */
-async function throwIfHttpError(
-  response: Response,
-  url: string,
-  init: RequestInit
-): Promise<void> {
+async function throwIfHttpError(response: Response, url: string, init: RequestInit): Promise<void> {
   if (response.ok) return;
 
   let meta: ApiErrorMeta = {};
@@ -64,9 +56,7 @@ async function throwIfHttpError(
     const first = body.errors?.[0] as Record<string, unknown> | undefined;
     if (first) {
       meta = first;
-      const inner =
-        (first.meta as { errors?: { detail?: string }[] } | undefined)?.errors?.[0]
-          ?.detail;
+      const inner = (first.meta as { errors?: { detail?: string }[] } | undefined)?.errors?.[0]?.detail;
       message = inner ?? (first.detail as string | undefined) ?? message;
     }
   } catch {
