@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ override: true });
+
 import { App } from '@slack/bolt';
 import { logger } from './logger';
 import { integrationService } from './services/integration-service';
@@ -27,7 +29,8 @@ app.action('show_error_details', actionShowErrorDetails);
     await integrationService.load();
     logger.info('⚡️ Polarity Slack Bot is running!');
   } catch (err) {
-    logger.error('Startup failed', err);
+    logger.error({err}, 'Polarity Slack Bot Y' +
+      'Startup failed');
     process.exit(1);
   }
 })();
