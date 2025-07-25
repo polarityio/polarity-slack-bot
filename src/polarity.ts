@@ -12,8 +12,19 @@
 import { createProxyDispatcher } from './proxy';
 import type { LookupResult, LookupResultEntity } from './types';
 import {logger} from "./logger";
+import { HeadersInit } from 'undici-types';
 
 const DISPATCHER = createProxyDispatcher();
+const POLARITY_URL = `https://${process.env.POLARITY_HOSTNAME}`;
+const POLARITY_TOKEN = process.env.POLARITY_API_KEY;
+
+if (!POLARITY_URL) {
+  throw new Error('Environment variable POLARITY_URL is required');
+}
+
+if (!POLARITY_TOKEN) {
+  throw new Error('Environment variable POLARITY_TOKEN is required');
+}
 
 /**
  * Structured error information returned by the Polarity API.
@@ -98,17 +109,6 @@ export interface ParsedEntity {
 
   /** Additional properties returned by the API are captured using an index signature. */
   [key: string]: unknown;
-}
-
-const POLARITY_URL = `https://${process.env.POLARITY_HOSTNAME}`;
-const POLARITY_TOKEN = process.env.POLARITY_API_KEY;
-
-if (!POLARITY_URL) {
-  throw new Error('Environment variable POLARITY_URL is required');
-}
-
-if (!POLARITY_TOKEN) {
-  throw new Error('Environment variable POLARITY_TOKEN is required');
 }
 
 /**
