@@ -19,17 +19,32 @@ async function commandPolarity({ ack, command, client }: SlackCommandMiddlewareA
   const channelId = command.channel_id;
   const send = createMessenger(client, channelId);
 
-  await ack();
-
-  // Ensure the bot is in the channel so it can post messages
+  // Ensure the bot is (or can be) in the channel before proceeding
+  let needInvite = false;
   try {
     await client.conversations.join({ channel: channelId });
   } catch (err) {
     const errorCode = (err as { data?: { error?: string } }).data?.error;
-    if (errorCode !== 'already_in_channel' && errorCode !== 'method_not_supported_for_dm') {
+    if (errorCode === 'method_not_supported_for_channel_type') {
+      // Private channel where the bot is not yet a member
+      needInvite = true;
+    } else if (errorCode !== 'already_in_channel' && errorCode !== 'method_not_supported_for_dm') {
       logger.warn({ err, channelId }, 'Failed to join channel');
     }
   }
+
+  if (needInvite) {
+    await ack({
+      response_type: 'ephemeral',
+      text:
+        'The Polarity Bot is not a member of this private channel.\n' +
+        'Please invite it with `/invite @Polarity` and run `/polarity` again.'
+    });
+    return;
+  }
+
+  // Bot is in the channel → acknowledge and proceed
+  await ack();
 
   if (!searchText) {
     await send({
