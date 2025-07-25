@@ -9,6 +9,22 @@ import { createMessenger, type SendFn } from '../utils/slack-messenger';
 import { ProgressBar } from '../blocks/progress-bar';
 import { ApiError } from '../errors/api-error';
 import { buildErrorBlocks } from '../blocks/error-block';
+import type { WebClient } from '@slack/web-api';
+
+/**
+ * Check whether the bot user is already a member of the given channel.
+ * Falls back to `false` if the API request fails for any reason.
+ */
+async function botInChannel(client: WebClient, channelId: string): Promise<boolean> {
+  try {
+    const { channel } = await client.conversations.info({ channel: channelId });
+    const info = channel as { is_member?: boolean };
+    return info.is_member === true;
+  } catch (err) {
+    logger.warn({ err, channelId }, 'Unable to fetch channel info');
+    return false;
+  }
+}
 
 async function commandPolarity({ ack, command, client }: SlackCommandMiddlewareArgs & AllMiddlewareArgs) {
   // Note, based on this StackOverflow post you cannot replace_original when it comes to
@@ -21,25 +37,13 @@ async function commandPolarity({ ack, command, client }: SlackCommandMiddlewareA
 
   logger.info('Received message from channel ' + channelId);
   
-  //Ensure the bot is (or can be) in the channel before proceeding
-  let needInvite = false;
-  try {
-    await client.conversations.join({ channel: channelId });
-  } catch (err) {
-    const errorCode = (err as { data?: { error?: string } }).data?.error;
-    if (errorCode === 'method_not_supported_for_channel_type') {
-      // Private channel where the bot is not yet a member
-      needInvite = true;
-    } else if (errorCode !== 'already_in_channel' && errorCode !== 'method_not_supported_for_dm') {
-      logger.warn({ err, channelId }, 'Failed to join channel');
-    }
-  }
-
-  if (needInvite) {
+  // Check if the bot is already a member of the channel
+  const inChannel = await botInChannel(client, channelId);
+  if (!inChannel) {
     await ack({
       response_type: 'ephemeral',
       text:
-        'The Polarity Bot is not a member of this private channel.\n' +
+        'The Polarity Bot is not a member of this channel.\n' +
         'Please invite it with `/invite @Polarity` and run `/polarity` again.'
     });
     return;
