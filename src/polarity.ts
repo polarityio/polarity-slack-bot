@@ -60,7 +60,8 @@ async function fetchWithErrorHandling(
         method: init.method ?? 'GET',
         headers: sanitizeHeaders(init.headers),
         body: (init as { body?: unknown }).body
-      }
+      },
+      cause: err
     });
   }
 }
@@ -69,10 +70,7 @@ async function fetchWithErrorHandling(
  * Convert an HTTP error response into a rich {@link ApiError}.
  */
 async function throwIfHttpError(response: Response, url: string, init: RequestInit): Promise<void> {
-  logger.info('In ThrowHttpError');
-  
   if (response.ok) return;
-
   
   let meta: ApiErrorMeta = {};
   let message = `${response.status} ${response.statusText}`;
@@ -266,8 +264,6 @@ export async function getRunningIntegrations(): Promise<unknown[]> {
   };
 
   const response = await fetchWithErrorHandling(url.toString(), requestInit);
-
-  logger.info('Called Fetch');
   
   await throwIfHttpError(response, url.toString(), requestInit);
 

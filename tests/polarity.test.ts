@@ -25,9 +25,7 @@ function mockFetchOnce(payload: unknown, status = 200): void {
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   global.fetch = jest.fn(() =>
-    Promise.resolve(
-      new Response(JSON.stringify(payload), responseInit)
-    )
+    Promise.resolve(new Response(JSON.stringify(payload), responseInit))
   ) as unknown as typeof fetch;
 }
 
@@ -65,7 +63,8 @@ describe('polarity.ts', () => {
     mockFetchOnce(errorBody, 400);
 
     await jest.isolateModules(async () => {
-      const { parseEntities, ApiError } = await import('../src/polarity');
+      const { parseEntities } = await import('../src/polarity');
+      const { ApiError } = await import('../src/errors/api-error');
       await expect(parseEntities('foo')).rejects.toBeInstanceOf(ApiError);
     });
   });
@@ -116,11 +115,10 @@ describe('polarity.ts', () => {
     mockFetchOnce(errorBody, 500);
 
     await jest.isolateModules(async () => {
-      const { lookup, ApiError } = await import('../src/polarity');
+      const { lookup } = await import('../src/polarity');
+      const { ApiError } = await import('../src/errors/api-error');
       const entity = { value: '1.1.1.1', type: 'IPv4' };
-      await expect(
-        lookup([entity as never], 'maxmind')
-      ).rejects.toBeInstanceOf(ApiError);
+      await expect(lookup([entity as never], 'maxmind')).rejects.toBeInstanceOf(ApiError);
     });
   });
 
@@ -136,7 +134,8 @@ describe('polarity.ts', () => {
     mockFetchOnce(errorBody, 503);
 
     await jest.isolateModules(async () => {
-      const { getRunningIntegrations, ApiError } = await import('../src/polarity');
+      const { getRunningIntegrations } = await import('../src/polarity');
+      const { ApiError } = await import('../src/errors/api-error');
       await expect(getRunningIntegrations()).rejects.toBeInstanceOf(ApiError);
     });
   });
