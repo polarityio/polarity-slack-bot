@@ -1,5 +1,6 @@
 import { buildErrorBlocks } from '../src/blocks/error-block';
 import { ApiError } from '../src/polarity';
+import type { ActionsBlock, Button } from '@slack/types';
 
 describe('buildErrorBlocks', () => {
   it('prefixes the "Show Error Details" button with a warning emoji', () => {
@@ -8,9 +9,9 @@ describe('buildErrorBlocks', () => {
 
     // Find the button element
     const button = blocks
-      .filter((b): b is { type: 'actions'; elements: unknown[] } => b.type === 'actions')
-      .flatMap((b) => (b as { elements: { type: string; text?: { text: string } }[] }).elements)
-      .find((el) => el.type === 'button');
+      .filter((b): b is ActionsBlock => b.type === 'actions')
+      .flatMap((b) => b.elements)
+      .find((el): el is Button => el.type === 'button');
 
     expect(button).toBeDefined();
     expect(button?.text?.text).toBe(':warning: Show Error Details');
