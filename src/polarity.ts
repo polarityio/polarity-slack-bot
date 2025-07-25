@@ -43,6 +43,29 @@ function sanitizeHeaders(headers?: HeadersInit): Record<string, string> | undefi
 }
 
 /**
+ * Fetch wrapper that converts network-level errors into an {@link ApiError}
+ * containing the original request metadata.
+ */
+async function fetchWithErrorHandling(
+  url: string,
+  init: RequestInit
+): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Network error';
+    throw new ApiError(message, {
+      request: {
+        url,
+        method: init.method ?? 'GET',
+        headers: sanitizeHeaders(init.headers),
+        body: (init as { body?: unknown }).body
+      }
+    });
+  }
+}
+
+/**
  * Convert an HTTP error response into a rich {@link ApiError}.
  */
 async function throwIfHttpError(response: Response, url: string, init: RequestInit): Promise<void> {
@@ -129,7 +152,7 @@ export async function parseEntities(text: string): Promise<ParsedEntity[]> {
     ...(DISPATCHER ? { dispatcher: DISPATCHER } : {})
   };
 
-  const response = await fetch(url, requestInit);
+  const response = await fetchWithErrorHandling(url, requestInit);
   await throwIfHttpError(response, url, requestInit);
 
   const body = (await response.json()) as {
@@ -190,7 +213,7 @@ export async function lookup(entities: ParsedEntity[], integrationId: string): P
     ...(DISPATCHER ? { dispatcher: DISPATCHER } : {})
   };
 
-  const response = await fetch(url, requestInit);
+  const response = await fetchWithErrorHandling(url, requestInit);
   await throwIfHttpError(response, url, requestInit);
 
   const body = (await response.json()) as {
@@ -242,7 +265,7 @@ export async function getRunningIntegrations(): Promise<unknown[]> {
     ...(DISPATCHER ? { dispatcher: DISPATCHER } : {})
   };
 
-  const response = await fetch(url.toString(), requestInit);
+  const response = await fetchWithErrorHandling(url.toString(), requestInit);
 
   logger.info('Called Fetch');
   
