@@ -16,7 +16,18 @@ interface BuildOptions {
 export function appHomeBlocks(
   { isAdmin = false, refreshDisabled = false, showRefreshingNotice = false }: BuildOptions = {}
 ): KnownBlock[] {
-  const blocks: KnownBlock[] = [];
+  const overview: KnownBlock = {
+    type: 'section',
+    text: {
+      type: 'mrkdwn',
+      text:
+        '*Polarity Slack Bot*\n' +
+        'Use `/polarity <text>` to search across all running integrations directly from Slack.\n' +
+        'For help or questions, email customersuccess@polarity.io'
+    }
+  };
+
+  const blocks: KnownBlock[] = [overview];
 
   if (isAdmin) {
     if (!refreshDisabled) {
