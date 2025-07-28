@@ -9,23 +9,37 @@ async function actionRefreshIntegrations({
   body,
   client
 }: SlackActionMiddlewareArgs<BlockAction> & AllMiddlewareArgs) {
-  await ack();
+  const userId = (body as SlackBodyWithUser).user?.id;
+  if (!userId) {
+    logger.error('Unexpected body structure in refresh_integrations action');
+    await ack();
+    return;
+  }
 
-  // Re-load running integrations
+  /* 1️⃣  Disable the button and show a “refreshing” notice for this user */
+  await ack({
+    response_action: 'update',
+    view: {
+      type: 'home',
+      blocks: appHomeBlocks({
+        isAdmin: true,
+        refreshDisabled: true,
+        showRefreshingNotice: true
+      })
+    }
+  });
+
+  /* 2️⃣  Perform the refresh */
   await integrationService.load();
 
-  // Rebuild Home tab blocks (admin view)
-  const blocks = appHomeBlocks({ isAdmin: true });
-
-  const userId = (body as SlackBodyWithUser).user?.id;
-  if (userId) {
-    await client.views.publish({
-      user_id: userId,
-      view: { type: 'home', blocks }
-    });
-  } else {
-    logger.error('Unexpected body structure in refresh_integrations action');
-  }
+  /* 3️⃣  Restore the normal Home view (button enabled, notice gone) */
+  await client.views.publish({
+    user_id: userId,
+    view: {
+      type: 'home',
+      blocks: appHomeBlocks({ isAdmin: true })
+    }
+  });
 }
 
 

@@ -3,13 +3,19 @@ import { integrationService } from '../services/integration-service';
 
 interface BuildOptions {
   isAdmin?: boolean;
+  /** Grey-out the “Refresh Integrations” button. */
+  refreshDisabled?: boolean;
+  /** Show an *hourglass* notice while refresh is running. */
+  showRefreshingNotice?: boolean;
 }
 
 /**
  * Build Home-tab blocks shown in Slack.
  * @param options.isAdmin whether the user is a workspace admin/owner
  */
-export function appHomeBlocks({ isAdmin = false }: BuildOptions = {}): KnownBlock[] {
+export function appHomeBlocks(
+  { isAdmin = false, refreshDisabled = false, showRefreshingNotice = false }: BuildOptions = {}
+): KnownBlock[] {
   const blocks: KnownBlock[] = [];
 
   if (isAdmin) {
@@ -20,10 +26,23 @@ export function appHomeBlocks({ isAdmin = false }: BuildOptions = {}): KnownBloc
         {
           type: 'button',
           text: { type: 'plain_text', text: 'Refresh Integrations' },
-          action_id: 'refresh_integrations'
+          action_id: 'refresh_integrations',
+          disabled: refreshDisabled
         }
       ]
     });
+
+    if (showRefreshingNotice) {
+      blocks.push({
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
+            text: ':hourglass_flowing_sand: *Refreshing integrations…*'
+          }
+        ]
+      });
+    }
   } else {
     blocks.push({
       type: 'section',
