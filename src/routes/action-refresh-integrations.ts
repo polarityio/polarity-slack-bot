@@ -17,8 +17,10 @@ async function actionRefreshIntegrations({
   }
 
   /* 1️⃣  Disable the button and show a “refreshing” notice for this user */
-  await ack({
-    response_action: 'update',
+  await ack();
+
+  await client.views.publish({
+    user_id: userId,
     view: {
       type: 'home',
       blocks: appHomeBlocks({
