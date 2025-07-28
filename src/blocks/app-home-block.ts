@@ -19,18 +19,19 @@ export function appHomeBlocks(
   const blocks: KnownBlock[] = [];
 
   if (isAdmin) {
-    blocks.push({
-      type: 'actions',
-      block_id: 'refresh_block',
-      elements: [
-        {
-          type: 'button',
-          text: { type: 'plain_text', text: 'Refresh Integrations' },
-          action_id: 'refresh_integrations',
-          disabled: refreshDisabled
-        }
-      ]
-    });
+    if (!refreshDisabled) {
+      blocks.push({
+        type: 'actions',
+        block_id: 'refresh_block',
+        elements: [
+          {
+            type: 'button',
+            text: { type: 'plain_text', text: 'Refresh Integrations' },
+            action_id: 'refresh_integrations'
+          }
+        ]
+      });
+    }
 
     if (showRefreshingNotice) {
       blocks.push({
