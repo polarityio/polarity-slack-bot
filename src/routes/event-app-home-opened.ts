@@ -1,5 +1,6 @@
 import type { SlackEventMiddlewareArgs, AllMiddlewareArgs } from '@slack/bolt';
 import { appHomeBlocks } from '../blocks/app-home-block';
+import { integrationService } from '../services/integration-service';
 
 type AppHomeOpenedArgs = SlackEventMiddlewareArgs<'app_home_opened'> & AllMiddlewareArgs;
 
@@ -16,6 +17,30 @@ async function eventAppHomeOpened({ event, client }: AppHomeOpenedArgs) {
     !!userInfo.user && (userInfo.user.is_admin || userInfo.user.is_owner || userInfo.user.is_primary_owner);
 
   const isAdmin = slackAdmin || extraAdmins.includes(event.user);
+
+  // ──────────────────────────────────────────────────────────────────────
+  // First-time load for admins: fetch integrations while showing hourglass
+  // ──────────────────────────────────────────────────────────────────────
+  if (isAdmin && integrationService.list().length === 0) {
+    await client.views.publish({
+      user_id: event.user,
+      view: {
+        type: 'home',
+        blocks: appHomeBlocks({ isAdmin: true, showRefreshingNotice: true })
+      }
+    });
+
+    await integrationService.load();
+
+    await client.views.publish({
+      user_id: event.user,
+      view: {
+        type: 'home',
+        blocks: appHomeBlocks({ isAdmin: true })
+      }
+    });
+    return;
+  }
 
   const blocks = appHomeBlocks({ isAdmin });
 
