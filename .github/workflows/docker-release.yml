@@ -1,0 +1,60 @@
+name: Build & release Docker image
+
+on:
+  pull_request:
+    types: [closed]         # fires when a PR is closed
+    branches: [main]        # …and the base branch is main
+
+jobs:
+  build-and-release:
+    if: github.event.pull_request.merged == true   # only continue if the PR was merged
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: slack-bot
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ──────────────────────────────────────────────────────────────
+      # 1. Node 24 environment & install deps
+      # ──────────────────────────────────────────────────────────────
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm ci --omit=optional
+
+      # ──────────────────────────────────────────────────────────────
+      # 2. Extract package.json version
+      # ──────────────────────────────────────────────────────────────
+      - name: Extract package version
+        id: pkg
+        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare env
+        run: |
+          echo "IMAGE_TAG=${{ steps.pkg.outputs.version }}" >> $GITHUB_ENV
+          echo "TAR_FILE=${{ env.IMAGE_NAME }}-${{ steps.pkg.outputs.version }}.tar" >> $GITHUB_ENV
+
+      # ──────────────────────────────────────────────────────────────
+      # 3. Build & save Docker image
+      # ──────────────────────────────────────────────────────────────
+      - name: Build Docker image
+        run: docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+      - name: Save image to tarball
+        run: docker save $IMAGE_NAME:$IMAGE_TAG -o $TAR_FILE
+
+      # ──────────────────────────────────────────────────────────────
+      # 4. Create GitHub release and upload tarball
+      # ──────────────────────────────────────────────────────────────
+      - name: Release & upload image
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.pkg.outputs.version }}
+          name: "Slack Bot v${{ steps.pkg.outputs.version }}"
+          files: ${{ env.TAR_FILE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
