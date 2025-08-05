@@ -156,10 +156,16 @@ Additional supported environment variables are documented in the `.env.example` 
 
 ## Running the Server with Docker
 
-Once you have the `.env` file configured, use the helper script which builds the image and runs it with default values.
+Once you have the `.env` file configured, use the helper script which builds the image and runs it with default values as a detached process.
 
 ```bash
-./start-bot.sh
+./start-bot.sh --detach
+```
+
+You can view the container using the `docker ps` command:
+
+```
+docker ps
 ```
 
 Common flags:
@@ -180,11 +186,24 @@ Examples:
 
 Logs rotate according to `LOG_MAX_SIZE` (default `10m`) and `LOG_MAX_FILE` (default `3`).
 
+To stop the bot you can use the `stop-bot.sh` script.
+
+```
+./stop-bot.sh
+```
+
+To view logs for the bot you can use the docker logs command with the container name:
+
+```
+docker logs polarity_slack_bot
+```
+
+
 If you prefer running locally without Docker you can install the Node dependencies and start the server:
 
 ```bash
 npm ci
-npm start
+npm run start
 ```
 Running locally requires that Node24+ is installed.
 
