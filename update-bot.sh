@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# Update or install the polarity-slack-bot Docker image from the latest GitHub release.
+#
+# Requirements:
+#   - bash, curl, jq, gzip, docker
+#   - optional $GITHUB_TOKEN to raise GitHub API rate-limits
+#
+# Behaviour:
+#   • If the image is absent → prompt to install the latest version.
+#   • If present and outdated → prompt to update.
+#   • If already at latest     → inform user and exit.
+set -euo pipefail
+
+REPO_OWNER="polarityio"
+REPO_NAME="polarity-slack-bot"
+IMAGE_NAME="polarity-slack-bot"
+
+info()  { echo -e "\033[1;34m[INFO]\033[0m  $*"; }
+warn()  { echo -e "\033[1;33m[WARN]\033[0m  $*"; }
+error() { echo -e "\033[1;31m[ERROR]\033[0m $*"; }
+
+tmp_dir=
+cleanup() {
+  [[ -n "${tmp_dir:-}" && -d "$tmp_dir" ]] && rm -rf "$tmp_dir"
+}
+trap cleanup EXIT
+
+# ---------------------------------------------------------------------------
+# Fetch latest release metadata
+# ---------------------------------------------------------------------------
+info "Fetching latest release information…"
+AUTH_HEADER=""
+if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+  AUTH_HEADER="Authorization: token $GITHUB_TOKEN"
+fi
+
+api_json=$(curl -sSLH "Accept: application/vnd.github+json" ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
+  "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest")
+
+latest_tag=$(jq -r '.tag_name' <<<"$api_json")
+if [[ "$latest_tag" == "null" || -z "$latest_tag" ]]; then
+  error "Unable to retrieve latest version tag"; exit 1
+fi
+latest_version="${latest_tag#v}"
+tgz_name="${IMAGE_NAME}-${latest_version}.tgz"
+download_url=$(jq -r --arg FILE "$tgz_name" '.assets[] | select(.name==$FILE) | .browser_download_url' <<<"$api_json")
+
+if [[ -z "$download_url" ]]; then
+  error "Could not find asset $tgz_name in latest release"; exit 1
+fi
+info "Latest version is $latest_version"
+
+# ---------------------------------------------------------------------------
+# Determine installed version (if any)
+# ---------------------------------------------------------------------------
+installed_tags=($(docker images --format "{{.Repository}}:{{.Tag}}" "$IMAGE_NAME" 2>/dev/null | grep "^${IMAGE_NAME}:" || true))
+
+installed_version=""
+if [[ ${#installed_tags[@]} -gt 0 ]]; then
+  versions=()
+  for tag in "${installed_tags[@]}"; do
+    v=${tag#${IMAGE_NAME}:}
+    [[ "$v" != "latest" ]] && versions+=("$v")
+  done
+  if [[ ${#versions[@]} -gt 0 ]]; then
+    IFS=$'\n' installed_version=$(printf '%s\n' "${versions[@]}" | sort -V | tail -n1)
+  fi
+fi
+
+if [[ -z "$installed_version" ]]; then
+  warn "The ${IMAGE_NAME} image is not installed."
+  read -r -p "Install version ${latest_version}? [y/N] " answer
+  [[ "$answer" =~ ^[Yy]$ ]] || { info "Aborted."; exit 0; }
+elif [[ "$installed_version" == "$latest_version" ]]; then
+  info "You already have the latest version (${installed_version}). Nothing to do."
+  exit 0
+else
+  warn "Installed version: ${installed_version}"
+  warn "Latest available:  ${latest_version}"
+  read -r -p "Update to ${latest_version}? [y/N] " answer
+  [[ "$answer" =~ ^[Yy]$ ]] || { info "Aborted."; exit 0; }
+fi
+
+# ---------------------------------------------------------------------------
+# Download, extract, and load the image
+# ---------------------------------------------------------------------------
+tmp_dir=$(mktemp -d)
+tgz_path="${tmp_dir}/${tgz_name}"
+info "Downloading ${tgz_name}…"
+curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$tgz_path" "$download_url"
+
+info "Loading Docker image (this may take a moment)…"
+gzip -dc "$tgz_path" | docker load
+
+info "Tagging image as latest…"
+docker tag "${IMAGE_NAME}:${latest_version}" "${IMAGE_NAME}:latest"
+
+info "Done! ${IMAGE_NAME}:${latest_version} is ready."
