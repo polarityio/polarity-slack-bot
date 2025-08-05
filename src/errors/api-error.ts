@@ -1,3 +1,4 @@
+const serializer = require('pino-std-serializers').err;
 /**
  * Structured error information returned by the Polarity API.
  */
@@ -12,13 +13,14 @@ export interface SerializedIntegrationError {
    * the initial value is "IntegrationError".
    */
   name: string;
+  message: string;
   /**
    * The `cause` property is used to specify the `cause` of the error.  Typically,
    * this property is used to pass through a related Error instance.
    */
   cause?: Error;
   /**
-   * an optional  meta object containing non-standard meta-information about the error.
+   * an optional meta object containing non-standard meta-information about the error.
    */
   meta?: ApiErrorMeta;
 }
@@ -46,8 +48,11 @@ export class ApiError extends Error {
    * @returns JSON representation of the error
    */
   toJSON() {
+    const serialized = serializer(this);
+    
     const props: SerializedIntegrationError = {
-      name: this.name
+      name: this.name,
+      message: serialized.message
     };
 
     if (this.meta && Object.keys(this.meta).length > 0) {

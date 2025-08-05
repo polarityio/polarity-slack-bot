@@ -5,7 +5,7 @@ import type { ActionsBlock, Button } from '@slack/types';
 describe('buildErrorBlocks', () => {
   it('prefixes the "Show Error Details" button with a warning emoji', () => {
     const err = new ApiError('Something went wrong');
-    const blocks = buildErrorBlocks('Test Integration', err);
+    const blocks = buildErrorBlocks('Test Integration', 'TEST', err);
 
     // Find the button element
     const button = blocks

@@ -7,8 +7,8 @@ import { AllMiddlewareArgs, type SlackCommandMiddlewareArgs } from '@slack/bolt'
 import { LookupResult } from '../types';
 import { createMessenger, type SendFn } from '../utils/slack-messenger';
 import { ProgressBar } from '../blocks/progress-bar';
-import { ApiError } from '../errors/api-error';
-import { buildErrorBlocks } from '../blocks/error-block';
+import { ApiError, parseErrorToReadableJson } from '../errors/api-error';
+import { buildErrorBlocks, buildErrorBlocksWithTitle } from '../blocks/error-block';
 import type { WebClient } from '@slack/web-api';
 
 /**
@@ -31,12 +31,12 @@ async function commandPolarity({ ack, command, client }: SlackCommandMiddlewareA
   // command messages (only action message):
   // https://stackoverflow.com/questions/71940100/cannot-replace-or-delete-the-response-to-slack-slash-command
   // this means any content we return will stay in Slack and cannot be updated.
+  logger.debug('Received command');
+
   const searchText = command.text?.trim();
   const channelId = command.channel_id;
   const send = createMessenger(client, channelId);
 
-  logger.info('Received message from channel ' + channelId);
-  
   // Check if the bot is already a member of the channel
   const inChannel = await botInChannel(client, channelId);
   if (!inChannel) {
@@ -49,6 +49,7 @@ async function commandPolarity({ ack, command, client }: SlackCommandMiddlewareA
     return;
   }
 
+  logger.debug('Acknowledging command');
   // Bot is in the channel → acknowledge and proceed
   await ack();
 
@@ -62,6 +63,7 @@ async function commandPolarity({ ack, command, client }: SlackCommandMiddlewareA
   }
 
   const integrations = integrationService.list();
+  logger.debug('Fetched integration list');
 
   // If no integrations are cached, inform the user and exit early
   if (integrations.length === 0) {
@@ -86,6 +88,7 @@ async function commandPolarity({ ack, command, client }: SlackCommandMiddlewareA
 
   try {
     // Parse entities only once
+    logger.debug('Parsing Entities');
     const parsedEntities = await parseEntities(searchText);
     logger.trace({ parsedEntities }, `Parsed Entities Result`);
     await progressBar.setLabel(`Searching ${totalIntegrations} integrations`);
@@ -190,14 +193,31 @@ async function respondSingleEntity(
       } catch (err) {
         logger.error({ err, integrationId: id }, `Lookup failed for integration ${id}`);
         if (err instanceof ApiError) {
-          await send({
-            text: `:warning: ${meta.name || meta.acronym || id} lookup failed – ${err.message}`,
-            blocks: buildErrorBlocks(meta.name || meta.acronym || id, err)
-          });
+          // collect errors which we then append to any results data so errors always
+          // appear last in the results.
+          if (!firstResponseSent) {
+            // This is the first response so we need to add the title
+            await send({
+              text: `Polarity results – ${meta.name || meta.acronym || id}`,
+              blocks: buildErrorBlocksWithTitle(
+                meta.name,
+                meta.acronym,
+                err,
+                parsedEntities[0].value,
+                parsedEntities[0].type
+              )
+            });
+            firstResponseSent = true;
+          } else {
+            await send({
+              text: `Polarity results – ${meta.name || meta.acronym || id}`,
+              blocks: buildErrorBlocks(meta.name, meta.acronym, err)
+            });
+          }
         } else {
           const message = err instanceof Error ? err.message : 'Unknown error';
           await send({
-            text: `:warning: ${meta.name || meta.acronym || id} lookup failed – ${message}`
+            text: `:warning: ${meta.name || meta.acronym || id} lookup failed – ${message}\n`
           });
         }
         return;
@@ -235,6 +255,7 @@ async function respondGroupedEntities(
   const resultsByEntity = new Map<string, WithIntegrationInfo[]>();
 
   let completed = 0;
+  let errorBlocks: KnownBlock[] = [];
 
   // Run all integration lookups in parallel but only collect results
   const lookupPromises = integrationService.list().map((meta) =>
@@ -302,10 +323,17 @@ async function respondGroupedEntities(
       } catch (err) {
         logger.error({ err, integrationId: id }, `Lookup failed for integration ${id}`);
         if (err instanceof ApiError) {
-          await send({
-            text: `:warning: ${meta.name || meta.acronym || id} lookup failed – ${err.message}`,
-            blocks: buildErrorBlocks(meta.name || meta.acronym || id, err)
-          });
+          // collect errors which we then append to any results data so errors always
+          // appear last in the results.
+          if (errorBlocks.length === 0) {
+            // if this is the first error add a divider to the beginning of it and a title
+            errorBlocks.push({ type: 'divider' });
+            errorBlocks.push({
+              type: 'header',
+              text: { type: 'plain_text', text: `Errors` }
+            });
+          }
+          errorBlocks = errorBlocks.concat(buildErrorBlocks(meta.name, meta.acronym, err));
         }
       } finally {
         completed += 1;
@@ -335,14 +363,16 @@ async function respondGroupedEntities(
   const allResults: WithIntegrationInfo[] = Array.from(resultsByEntity.values()).flat();
 
   // Render all entities in a single block set and send once.
-  const blocks = resultBlocksWithTitle(allResults);
+  let blocks = resultBlocksWithTitle(allResults);
+
+  if (errorBlocks.length > 0) {
+    blocks = blocks.concat(errorBlocks);
+  }
 
   await send({
     text: 'Polarity results',
     blocks
   });
-
-  /* no “missing integrations” summary anymore */
 }
 
 export default commandPolarity;

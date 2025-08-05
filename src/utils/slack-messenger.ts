@@ -111,7 +111,6 @@ export function createMessenger(client: WebClient, channelId: string): SendFn {
       ) {
         try {
           // conversations.join covers public & private channels the bot can access
-          // @ts-expect-error – method typing is incomplete in @slack/web-api
           await client.conversations.join({ channel: channelId });
         } catch (joinErr) {
           logger.warn(
