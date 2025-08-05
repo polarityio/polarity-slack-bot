@@ -23,13 +23,13 @@ jobs:
       - name: Compare package.json versions
         run: |
           # version in PR (HEAD)
-          HEAD_VERSION=$(node -p "require('./package.json').version")
+          HEAD_VERSION=$(node -e "console.log(require('./package.json').version)")
 
           # fetch main to ensure up-to-date
           git fetch origin main --depth=1
 
           # version in main (BASE)
-          BASE_VERSION=$(git show origin/main:package.json | node -pe "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>console.log(JSON.parse(d).version));")
+          BASE_VERSION=$(git show origin/main:package.json | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).version")
 
           echo "HEAD version: $HEAD_VERSION"
           echo "BASE version: $BASE_VERSION"
