@@ -1,0 +1,16 @@
+.aider*
+# Ignore personal environment file
+.env
+
+# Keep the example template in version control
+!.env.example
+
+# Don't commit the Aider conventions file
+CONVENTIONS.md
+
+# Ignore the real `.env` file
+.env
+
+# Ignore Intellij directories and node modules
+.idea/
+node_modules/
