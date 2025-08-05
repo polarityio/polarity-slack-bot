@@ -20,15 +20,32 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Compare package.json versions
+      # ──────────────────────────────────────────────────────────────
+      # 1. Ensure lockfile is in sync with package.json
+      # ──────────────────────────────────────────────────────────────
+      - name: Validate package-lock.json version matches package.json
         run: |
-          # version in PR (HEAD)
+          PKG_VERSION=$(node -e "console.log(require('./package.json').version)")
+          LOCK_VERSION=$(node -e "console.log(require('./package-lock.json').version)")
+
+          echo "package.json version:      $PKG_VERSION"
+          echo "package-lock.json version: $LOCK_VERSION"
+
+          if [ "$PKG_VERSION" != "$LOCK_VERSION" ]; then
+            echo "::error title=Lockfile out of sync::package-lock.json version ($LOCK_VERSION) does not match package.json version ($PKG_VERSION). Run 'npm install --package-lock-only' or 'npm version'."
+            exit 1
+          fi
+
+      # ──────────────────────────────────────────────────────────────
+      # 2. Verify version bump relative to main
+      # ──────────────────────────────────────────────────────────────
+      - name: Ensure version is bumped compared to main
+        run: |
           HEAD_VERSION=$(node -e "console.log(require('./package.json').version)")
 
           # fetch main to ensure up-to-date
           git fetch origin main --depth=1
 
-          # version in main (BASE)
           BASE_VERSION=$(git show origin/main:package.json | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).version")
 
           echo "HEAD version: $HEAD_VERSION"
