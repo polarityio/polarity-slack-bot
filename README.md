@@ -60,7 +60,12 @@ Connect your Slack workspace to [Polarity](https://threatconnect.com/polarity-by
                 "canvases:write",
                 "commands",
                 "users:read",
-                "channels:join"
+                "channels:join",
+                "chat:write.public",
+                "channels:read",
+                "groups:read",
+                "mpim:read",
+                "im:read"
             ]
         }
     },
@@ -83,6 +88,17 @@ Connect your Slack workspace to [Polarity](https://threatconnect.com/polarity-by
     }
 }
 ```
+
+### Permission Requirements
+
+The following permissions are required for the Polarity Slack Bot to be able to determine if it is a member of a private channel when being invoked.  If the Polarity Bot is not a member of the channel, the Bot will prompt the user to invite it.
+```
+"channels:read",
+"groups:read",
+"mpim:read",
+"im:read"
+```
+
 
 ### Add App Level Token 
 1. Click on "Basic Information" and scroll down to "App-Level Tokens". 
