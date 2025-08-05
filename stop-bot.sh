@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Stop the Polarity Slack bot container started by run-polarity.sh
+# Stop the Polarity Slack bot container started by start-bot.sh
 #
 # Usage:
 #   ./stop-bot.sh

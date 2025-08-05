@@ -15,7 +15,7 @@ Connect your Slack workspace to [Polarity](https://threatconnect.com/polarity-by
 ## Installing the Slack App
 
 ### Create Slack App
-1. NAvigate to <https://api.slack.com/apps>  and select “From scratch”.  
+1. Navigate to <https://api.slack.com/apps>  and select “From scratch”.  
 
 ### Add App Manifest
 1. Click on "Features" -> "App Manifest"  
@@ -129,13 +129,28 @@ cp .env.example .env
 ```env
 POLARITY_SLACK_BOT_TOKEN=…
 POLARITY_SLACK_BOT_SIGNING_SECRET=…
-POLARITY_SLACK_BOT_APP_TOKEN=
-POLARITY_API_KEY=
-POLARITY_HOSTNAME
+POLARITY_SLACK_BOT_APP_TOKEN=…
+POLARITY_HOSTNAME=…
+POLARITY_API_KEY=…
+POLARITY_SLACK_BOT_ADMIN_MEMBER_IDS=…
 ```
 
-Additional supported environment variables are documented in the `.env.example` file.
+The `POLARITY_SLACK_BOT_ADMIN_MEMBER_IDS` is only required if non Slack admins will be managing the Polarity Slack Bot.
 
+The variable is a comma-separated list of Slack member IDs that should be treated as admins for the Slack Bot
+even if they are not workspace admins/owners. Admins have an ability to refresh which integrations
+are searched after permissions changes are made to the Polarity API key configured for the bot.
+
+Example: U123ABC,U456DEF
+
+To view your member id:
+1. Click your name under "Direct Message"
+2. Click your avatar (top-left).
+3. In the pop-up, click “View full profile”.
+4. In the three-dot “More” menu choose “Copy member ID”.
+5. The clipboard now contains something like U012ABCDEF which is your member id
+
+Additional supported environment variables are documented in the `.env.example` file.
 
 ---
 
@@ -144,7 +159,7 @@ Additional supported environment variables are documented in the `.env.example` 
 Once you have the `.env` file configured, use the helper script which builds the image and runs it with default values.
 
 ```bash
-./run-polarity.sh
+./start-bot.sh
 ```
 
 Common flags:
@@ -159,8 +174,8 @@ Common flags:
 Examples:
 
 ```bash
-./run-polarity.sh -n host                 # host networking
-./run-polarity.sh -d -c ./my-ca.pem       # detached with extra CAs
+./start-bot.sh -n host                 # host networking
+./start-bot.sh -d -c ./my-ca.pem       # detached with extra CAs
 ```
 
 Logs rotate according to `LOG_MAX_SIZE` (default `10m`) and `LOG_MAX_FILE` (default `3`).
