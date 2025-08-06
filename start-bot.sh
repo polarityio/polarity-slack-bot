@@ -20,7 +20,11 @@
 set -euo pipefail
 
 usage() {
-  grep '^#' "$0" | cut -c 3-
+  # Print leading comment block; stop at the first non-comment line
+  awk '
+    /^#/  { sub(/^# ?/, ""); print; next }  # strip leading “# ” and output
+           { exit }                         # first non-comment → quit
+  ' "$0"
 }
 
 BUILD_LOCAL=0
