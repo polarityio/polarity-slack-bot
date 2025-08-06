@@ -102,6 +102,7 @@ if command -v docker >/dev/null 2>&1; then
   info "Downloading signature & certificate…"
   curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$sig_path"  "${download_url}.sig"
   curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$cert_path" "${download_url}.pem"
+  info "Signature & certificate saved to $tmp_dir"
 
   info "Verifying signature with cosign (container)…"
   docker run --rm \
