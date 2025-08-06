@@ -3,12 +3,13 @@
 # Helper script to build and run the Polarity Slack bot in Docker
 #
 # Usage:
-#   ./run-polarity.sh [-e|--env-file PATH] [-c|--ca-file PATH] [-n|--network MODE] [-h|--help]
+#   ./run-polarity.sh [-e|--env-file PATH] [-c|--ca-file PATH] [-n|--network MODE] [-b|--build-local] [-h|--help]
 #
 # Options:
 #   -e, --env-file PATH   Path to .env file (default: .env)
 #   -c, --ca-file  PATH   Path to extra CA bundle (optional)
 #   -n, --network  MODE   Docker network mode (e.g. host, bridge) (optional; if omitted, no --network flag is passed)
+#   -b, --build-local     Build and run image from current source (developer mode)
 #   -d, --detach          Run container in background (adds -d to docker run)
 #   -h, --help            Show this help and exit
 #
@@ -22,7 +23,8 @@ usage() {
   grep '^#' "$0" | cut -c 3-
 }
 
-IMAGE_NAME="polarity-bot"
+BUILD_LOCAL=0
+IMAGE_NAME="polarity-slack-bot"   # default; may change to polarity-bot in dev mode
 ENV_FILE=".env"
 CA_FILE=""
 NETWORK_MODE=""
@@ -45,6 +47,10 @@ while [[ $# -gt 0 ]]; do
       NETWORK_MODE="$2"
       shift 2
       ;;
+    -b|--build-local)
+      BUILD_LOCAL=1
+      shift
+      ;;
     -d|--detach)
       DETACH=1
       shift
@@ -61,8 +67,17 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-echo "🔧 Building Docker image ${IMAGE_NAME}…"
-docker build -t "${IMAGE_NAME}" .
+if [[ $BUILD_LOCAL -eq 1 ]]; then
+  IMAGE_NAME="polarity-bot"
+  echo "🔧 Building Docker image ${IMAGE_NAME}…"
+  docker build -t "${IMAGE_NAME}" .
+else
+  # ensure pre-built image is present
+  if ! docker image inspect "${IMAGE_NAME}:latest" >/dev/null 2>&1; then
+    echo "✖ ${IMAGE_NAME} image not found. Please run ./update-bot.sh first." >&2
+    exit 1
+  fi
+fi
 
 # ── Assemble docker run args ─────────────────────────────────
 DOCKER_ARGS=(
