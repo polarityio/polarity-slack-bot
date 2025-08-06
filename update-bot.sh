@@ -85,6 +85,7 @@ fi
 # Download, extract, and load the image
 # ---------------------------------------------------------------------------
 tmp_dir=$(mktemp -d)
+chmod 755 "$tmp_dir"   # ensure container user can access the mounted directory
 tgz_path="${tmp_dir}/${tgz_name}"
 info "Downloading ${tgz_name}…"
 curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$tgz_path" "$download_url"
