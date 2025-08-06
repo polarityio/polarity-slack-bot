@@ -89,6 +89,39 @@ tgz_path="${tmp_dir}/${tgz_name}"
 info "Downloading ${tgz_name}…"
 curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$tgz_path" "$download_url"
 
+# ---------------------------------------------------------------------------
+# Verify integrity / authenticity – prefer cosign via Docker, fallback SHA-256
+# ---------------------------------------------------------------------------
+COSIGN_IMAGE="ghcr.io/sigstore/cosign:v2.2.3"
+
+if command -v docker >/dev/null 2>&1; then
+  sig_path="${tmp_dir}/${tgz_name}.sig"
+  cert_path="${tmp_dir}/${tgz_name}.pem"
+
+  info "Downloading signature & certificate…"
+  curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$sig_path"  "${download_url}.sig"
+  curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$cert_path" "${download_url}.pem"
+
+  info "Verifying signature with cosign (container)…"
+  docker run --rm \
+    -e COSIGN_EXPERIMENTAL=1 \
+    -v "${tmp_dir}:/work" -w /work \
+    "${COSIGN_IMAGE}" \
+    verify-blob \
+      --signature "$(basename "$sig_path")" \
+      --certificate "$(basename "$cert_path")" \
+      --certificate-identity "https://github.com/${REPO_OWNER}/${REPO_NAME}/.github/workflows/docker-release.yml@refs/heads/main" \
+      --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+      "$(basename "$tgz_path")" \
+    || { error "Signature verification failed!"; exit 1; }
+else
+  info "Docker not available for cosign – falling back to SHA-256 checksum verification."
+  checksum_path="${tmp_dir}/${tgz_name}.sha256"
+  curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$checksum_path" "${download_url}.sha256"
+  info "Verifying checksum…"
+  (cd "$tmp_dir" && sha256sum -c "$(basename "$checksum_path")") || { error "Checksum verification failed!"; exit 1; }
+fi
+
 info "Loading Docker image (this may take a moment)…"
 gzip -dc "$tgz_path" | docker load
 
