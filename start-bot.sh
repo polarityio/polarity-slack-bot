@@ -24,7 +24,7 @@ usage() {
 }
 
 BUILD_LOCAL=0
-IMAGE_NAME="polarity-slack-bot"   # default; may change to polarity-bot in dev mode
+IMAGE_NAME="polarity-slack-bot"   # default; switches to polarity-slack-bot-dev in dev mode
 ENV_FILE=".env"
 CA_FILE=""
 NETWORK_MODE=""
@@ -68,7 +68,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ $BUILD_LOCAL -eq 1 ]]; then
-  IMAGE_NAME="polarity-bot"
+  IMAGE_NAME="polarity-slack-bot-dev"
   echo "🔧 Building Docker image ${IMAGE_NAME}…"
   docker build -t "${IMAGE_NAME}" .
 else
