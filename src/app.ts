@@ -32,8 +32,7 @@ app.action('show_error_details', actionShowErrorDetails);
     await integrationService.load();
     logger.info('⚡️ Polarity Slack Bot is running!');
   } catch (err) {
-    logger.error({err}, 'Polarity Slack Bot Y' +
-      'Startup failed');
+    logger.error({err}, 'Polarity Slack Bot Startup failed');
     process.exit(1);
   }
 })();
