@@ -12,6 +12,23 @@ Connect your Slack workspace to [Polarity](https://threatconnect.com/polarity-by
 
 ---
 
+## Requirements
+
+### Software Requirements
+
+The Polarity Slack Bot should be run on a server with the following software pre-installed and available on `$PATH`:
+
+```
+bash
+docker
+curl
+jq
+tar
+gzip
+```
+
+### Hardware Requirements  
+
 ## Installing the Slack App
 
 ### Create Slack App
@@ -154,19 +171,29 @@ Additional supported environment variables are documented in the `.env.example` 
 
 ---
 
+## Download the Polarity Slack Bot Docker Image
+
+Run the `./update-bot.sh` script to fetch the latest release of the Polarity Slack Bot from the GitHub releases page.  The script will check if the polarity-slack-bot image is installed, if not, it will prompt you to download and install the latest image.  If the image is already installed then it will check for updates and prompt you to update.
+
+```
+./update-bot.sh
+```
+
 ## Running the Server with Docker
 
-Once you have the `.env` file configured, use the helper script which builds the image and runs it with default values as a detached process.
+Once you have the `.env` file configured and the docker image installed you can start the server using the `./start-bot.sh` script: 
 
 ```bash
 ./start-bot.sh --detach
 ```
 
-You can view the container using the `docker ps` command:
+The `--detach` flag runs the container in the background.  You can view the container using the `docker ps` command:
 
 ```
 docker ps
 ```
+
+
 
 Common flags:
 
@@ -175,6 +202,7 @@ Common flags:
 -c, --ca-file  PATH   Extra CA bundle for TLS
 -n, --network  MODE   Docker network (e.g. host)
 -d, --detach          Run container in background
+-b, --build-local     Build and run image from current source (developer mode)
 ```
 
 Examples:
@@ -198,6 +226,20 @@ To view logs for the bot you can use the docker logs command with the container 
 docker logs polarity_slack_bot
 ```
 
+To uninstall all Polarity Slack Bot docker images you can use the `uninstall-bot.sh` script:
+
+```bash
+./uninstall-bot.sh
+```
+
+
+If you'd like to build a local docker image instead of using an official release image you can run the `./start-bot.sh` script with the `--build-local` flag:
+
+```bash
+./start-bot.sh --build-local
+```
+
+This will build a docker image called `polarity-slack-bot-dev`.
 
 If you prefer running locally without Docker you can install the Node dependencies and start the server:
 
