@@ -2,7 +2,7 @@
   "name": "polarity_slack_bot",
   "main": "src/app.ts",
   "private": true,
-  "version": "1.0.6",
+  "version": "1.0.7",
   "dependencies": {
     "@slack/bolt": "^4.4.0",
     "dotenv": "^16.5.0",
