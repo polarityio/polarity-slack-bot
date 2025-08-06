@@ -3,7 +3,7 @@
 # Helper script to build and run the Polarity Slack bot in Docker
 #
 # Usage:
-#   ./run-polarity.sh [-e|--env-file PATH] [-c|--ca-file PATH] [-n|--network MODE] [-b|--build-local] [-h|--help]
+#   ./start-bot.sh [-e|--env-file PATH] [-c|--ca-file PATH] [-n|--network MODE] [-b|--build-local] [-h|--help]
 #
 # Options:
 #   -e, --env-file PATH   Path to .env file (default: .env)
