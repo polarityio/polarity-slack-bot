@@ -20,9 +20,12 @@ warn()  { echo -e "\033[1;33m[WARN]\033[0m  $*"; }
 error() { echo -e "\033[1;31m[ERROR]\033[0m $*"; }
 
 # ── Gather images ─────────────────────────────────────────────
+# Build a safe grep pattern like ^(polarity-slack-bot|polarity-slack-bot-dev):
+pattern="^($(IFS='|'; echo "${IMAGE_REPOS[*]}")):"
+
 mapfile -t images < <(
   docker images --format "{{.Repository}}:{{.Tag}}\t{{.ID}}" |
-    grep -E "^(${IMAGE_REPOS[*]// /|}):"
+    grep -E "$pattern"
 )
 
 if [[ ${#images[@]} -eq 0 ]]; then
