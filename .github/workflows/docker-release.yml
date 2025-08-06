@@ -1,20 +1,18 @@
 name: Build & release Docker image
 
 on:
-  pull_request:
-    types: [closed]         # fires when a PR is closed
-    branches: [main]        # …and the base branch is main
+  push:
+    branches: [main]        # run after code is merged to main
 
 # ──────────────────────────────────────────────────────────────
 # Permissions needed for keyless signing
 # ──────────────────────────────────────────────────────────────
 permissions:
-  contents: read            # allow actions/checkout
+  contents: write           # required to create release
   id-token: write           # enable GitHub OIDC for cosign
 
 jobs:
   build-and-release:
-    if: github.event.pull_request.merged == true   # only continue if the PR was merged
     runs-on: ubuntu-latest
 
     env:
