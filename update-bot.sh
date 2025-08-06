@@ -92,8 +92,8 @@ curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$tgz_path" "$download_url"
 # ---------------------------------------------------------------------------
 # Verify integrity / authenticity – prefer cosign via Docker, fallback SHA-256
 # ---------------------------------------------------------------------------
-COSIGN_VERSION="v2.5.3"
-COSIGN_IMAGE="ghcr.io/sigstore/cosign:${COSIGN_VERSION}"
+COSIGN_TAG="latest"                                # public tag on GHCR
+COSIGN_IMAGE="ghcr.io/sigstore/cosign/cosign:${COSIGN_TAG}"
 
 if command -v docker >/dev/null 2>&1; then
   sig_path="${tmp_dir}/${tgz_name}.sig"
