@@ -196,6 +196,7 @@ async function respondSingleEntity(
           // collect errors which we then append to any results data so errors always
           // appear last in the results.
           if (!firstResponseSent) {
+            firstResponseSent = true;
             // This is the first response so we need to add the title
             await send({
               text: `Polarity results – ${meta.name || meta.acronym || id}`,
@@ -206,8 +207,7 @@ async function respondSingleEntity(
                 parsedEntities[0].value,
                 parsedEntities[0].type
               )
-            });
-            firstResponseSent = true;
+            });            
           } else {
             await send({
               text: `Polarity results – ${meta.name || meta.acronym || id}`,
