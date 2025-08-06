@@ -85,6 +85,7 @@ fi
 # Download, extract, and load the image
 # ---------------------------------------------------------------------------
 tmp_dir=$(mktemp -d)
+chmod 755 "$tmp_dir"   # ensure container user can access the mounted directory
 tgz_path="${tmp_dir}/${tgz_name}"
 info "Downloading ${tgz_name}…"
 curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$tgz_path" "$download_url"
@@ -92,8 +93,8 @@ curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$tgz_path" "$download_url"
 # ---------------------------------------------------------------------------
 # Verify integrity / authenticity – prefer cosign via Docker, fallback SHA-256
 # ---------------------------------------------------------------------------
-COSIGN_VERSION="v2.5.3"
-COSIGN_IMAGE="ghcr.io/sigstore/cosign:${COSIGN_VERSION}"
+COSIGN_TAG="latest"                                # public tag on GHCR
+COSIGN_IMAGE="ghcr.io/sigstore/cosign/cosign:${COSIGN_TAG}"
 
 if command -v docker >/dev/null 2>&1; then
   sig_path="${tmp_dir}/${tgz_name}.sig"
@@ -102,6 +103,7 @@ if command -v docker >/dev/null 2>&1; then
   info "Downloading signature & certificate…"
   curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$sig_path"  "${download_url}.sig"
   curl -L ${AUTH_HEADER:+-H "$AUTH_HEADER"} -o "$cert_path" "${download_url}.pem"
+  info "Signature & certificate saved to $tmp_dir"
 
   info "Verifying signature with cosign (container)…"
   docker run --rm \

@@ -5,6 +5,13 @@ on:
     types: [closed]         # fires when a PR is closed
     branches: [main]        # …and the base branch is main
 
+# ──────────────────────────────────────────────────────────────
+# Permissions needed for keyless signing
+# ──────────────────────────────────────────────────────────────
+permissions:
+  contents: read            # allow actions/checkout
+  id-token: write           # enable GitHub OIDC for cosign
+
 jobs:
   build-and-release:
     if: github.event.pull_request.merged == true   # only continue if the PR was merged
