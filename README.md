@@ -12,31 +12,13 @@ Connect your Slack workspace to [Polarity](https://threatconnect.com/polarity-by
 
 ---
 
-## Requirements
-
-### Software Requirements
-
-The Polarity Slack Bot should be run on a server with the following software pre-installed and available on `$PATH`:
-
-```
-bash
-docker
-curl
-jq
-tar
-gzip
-```
-
-### Hardware Requirements  
-
 ## Installing the Slack App
 
 ### Create Slack App
-1. Navigate to <https://api.slack.com/apps>  and select “From scratch”.  
-
-### Add App Manifest
-1. Click on "Features" -> "App Manifest"  
-2. Paste the following JSON App Manifest and click "Save"
+1. Navigate to <https://api.slack.com/apps>  and select “Create an App”.
+2. Select "From a manifest"
+3. Select the appropriate workspace for the app to live in and click "Next"
+4. Paste the following JSON App Manifest and click "Save"
 
 ```
 {
@@ -78,6 +60,7 @@ gzip
                 "commands",
                 "users:read",
                 "channels:join",
+                "chat:write",
                 "chat:write.public",
                 "channels:read",
                 "groups:read",
@@ -106,16 +89,7 @@ gzip
 }
 ```
 
-### Permission Requirements
-
-The following permissions are required for the Polarity Slack Bot to be able to determine if it is a member of a private channel when being invoked.  If the Polarity Bot is not a member of the channel, the Bot will prompt the user to invite it.
-```
-"channels:read",
-"groups:read",
-"mpim:read",
-"im:read"
-```
-
+5. Click "Next" and then click "Create" to create the App
 
 ### Add App Level Token 
 1. Click on "Basic Information" and scroll down to "App-Level Tokens". 
@@ -134,7 +108,34 @@ The following permissions are required for the Polarity Slack Bot to be able to 
 You will use these three credentials when configuring the Slack Bot `.env` file below.
 
 
-### Configure .env fie
+# Running the Polarity Slack Bot Server
+
+Ensure the server where you plan to run the Polarity Slack Bot meets the following software and hardware requirements.  We recommend installing the SlackBot on a server separate from your Polarity Server but the two can be co-located if the server has resources for both.
+
+## Requirements
+
+### Software Requirements
+
+The Polarity Slack Bot should be run on a server with the following software pre-installed and available on `$PATH`:
+
+```
+bash
+docker
+curl
+jq
+tar
+gzip
+```
+
+### Hardware Requirements
+
+We recommend running the server on an Ubuntu system with a minimum of 2 logical cores, 4 GB of RAM, and 40GB of disk space.
+
+## Download the Server Software
+
+
+
+### Configure .env file
 
 1. Copy the `.env.example` file into a `.env` file
 
