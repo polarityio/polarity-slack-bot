@@ -149,9 +149,25 @@ You can download the installer directly onto your server using `wget` or `curl`.
 
 We recommend running the installer from your user's home directory or `/opt`.
 
+## Run the downloaded installer
+
+Once the installer is downloaded you will need to make it executable:
+
+```bash
+chmod u+x polarity-slack-bot-*.run
+```
+
+Finally, execute the installer:
+
+```bash
+./polarity-slack-bot-*.run
+```
+
+The self extracting installer will run an integrity check using cosign.  This requires network access to the GitHub Container Registry so the installer can run a containerized version of cosign to validate the installer.  If cosign cannot be run, the container will fall back to doing a sha256 checksum validation.
+
 ### Configure .env file
 
-Once the software is downloaded you will need to setup your `.env` file.
+Once the software is downloaded you will need to set up your `.env` file.
 
 1. Copy the `.env.example` file into a `.env` file
 
