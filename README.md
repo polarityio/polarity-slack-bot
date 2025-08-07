@@ -211,16 +211,6 @@ Additional supported environment variables are documented in the `.env.example` 
 
 ---
 
-## Install/Update the Polarity Slack Bot Docker Image
-
-Run the `./update-bot.sh` script to fetch the latest release of the Polarity Slack Bot from the GitHub releases page if the image is not already downloaded.
-
-The `./update-bot.sh` script will check if the polarity-slack-bot image is installed, if not, it will prompt you to download and install the latest image.  If the image is already installed then it will check for updates and prompt you to update.
-
-```
-./update-bot.sh
-```
-
 ## Running the Server with Docker
 
 Once you have the `.env` file configured and the docker image installed you can start the server using the `./start-bot.sh` script: 
@@ -266,12 +256,25 @@ To view logs for the bot you can use the docker logs command with the container 
 docker logs polarity_slack_bot
 ```
 
+## Install/Update the Polarity Slack Bot Docker Image
+
+Run the `./update-bot.sh` script to fetch the latest release of the Polarity Slack Bot from the GitHub releases page if the image is not already downloaded.
+
+The `./update-bot.sh` script will check if the polarity-slack-bot image is installed, if not, it will prompt you to download and install the latest image.  If the image is already installed then it will check for updates and prompt you to update.
+
+```
+./update-bot.sh
+```
+
+## Uninstall Polarity Slack Bot
+
 To uninstall all Polarity Slack Bot docker images you can use the `uninstall-bot.sh` script:
 
 ```bash
 ./uninstall-bot.sh
 ```
 
+## Local Development Build
 
 If you'd like to build a local docker image instead of using an official release image you can run the `./start-bot.sh` script with the `--build-local` flag:
 
@@ -295,7 +298,7 @@ Running locally requires that Node24+ is installed.
 
 ---
 
-## Using the Bot in Slack
+# Using the Bot in Slack
 
 ### Slash Command
 
