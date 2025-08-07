@@ -266,6 +266,12 @@ The `./update-bot.sh` script will check if the polarity-slack-bot image is insta
 ./update-bot.sh
 ```
 
+If you need to install a specific version of the Polarity Slack Bot you can do so using the `--version` flag.  For example to install version 1.0.20 of Polarity Slack Bot you could do:
+
+```bash
+./update-bot.sh --version 1.0.20
+```
+
 ## Uninstall Polarity Slack Bot
 
 To uninstall all Polarity Slack Bot docker images you can use the `uninstall-bot.sh` script:
