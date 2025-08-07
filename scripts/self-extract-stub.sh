@@ -30,6 +30,7 @@ trap 'rm -rf "$workdir"' EXIT
 extract_block() { awk "/^$1\$/ {f=1;next} /^$2\$/ {f=0} f" "$SELF" > "$3"; }
 extract_block "$SIG_BEGIN" "$SIG_END" "$workdir/installer.sig"
 extract_block "$CRT_BEGIN" "$CRT_END" "$workdir/installer.pem"
+chmod 644 "$workdir/installer."{sig,pem}   # make readable for cosign container
 
 # ── extract payload tar.gz ──────────────────────────────────────────
 payload="$workdir/payload.tgz"
