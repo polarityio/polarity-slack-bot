@@ -110,17 +110,12 @@ jobs:
           # Inject SHA into stub
           sed "s|@@PAYLOAD_SHA256@@|${PAYLOAD_SHA}|" "$STUB" > "$INSTALLER"
 
-          # Embed signature and certificate
-          echo "__SIG_BEGIN__" >> "$INSTALLER"
-          cat "$TAR_FILE.sig"  >> "$INSTALLER"
-          echo "__SIG_END__"   >> "$INSTALLER"
-          echo "__CRT_BEGIN__" >> "$INSTALLER"
-          cat "$TAR_FILE.pem"  >> "$INSTALLER"
-          echo "__CRT_END__"   >> "$INSTALLER"
+          # Embed signature and certificate into existing markers
+          sed -i "/^__SIG_BEGIN__\$/r $TAR_FILE.sig" "$INSTALLER"
+          sed -i "/^__CRT_BEGIN__\$/r $TAR_FILE.pem" "$INSTALLER"
 
-          # Append payload
-          echo "__ARCHIVE_BEGIN__" >> "$INSTALLER"
-          cat "$TAR_FILE"          >> "$INSTALLER"
+          # Append payload after archive marker already present in stub
+          cat "$TAR_FILE" >> "$INSTALLER"
           chmod +x "$INSTALLER"
 
       # ──────────────────────────────────────────────────────────────
