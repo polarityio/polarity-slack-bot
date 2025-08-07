@@ -17,6 +17,28 @@ IMAGE_NAME="polarity-slack-bot"
 # Absolute path to this script’s directory
 SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# ──────────────────────────────────────────────────────────────
+# CLI flags
+#   --version X.Y.Z   install that exact semver tag
+# ──────────────────────────────────────────────────────────────
+TARGET_VERSION=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --version|-v)
+      TARGET_VERSION="$2"
+      shift 2
+      ;;
+    -h|--help)
+      echo "usage: $0 [--version X.Y.Z]"
+      exit 0
+      ;;
+    *)
+      echo "Unknown flag: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
 info()  { echo -e "\033[1;34m[INFO]\033[0m  $*"; }
 warn()  { echo -e "\033[1;33m[WARN]\033[0m  $*"; }
 error() { echo -e "\033[1;31m[ERROR]\033[0m $*"; }
@@ -30,20 +52,32 @@ trap cleanup EXIT
 # ---------------------------------------------------------------------------
 # Fetch latest release metadata
 # ---------------------------------------------------------------------------
-info "Fetching latest release information…"
+if [[ -n "$TARGET_VERSION" ]]; then
+  info "Fetching release information for v${TARGET_VERSION}…"
+  RELEASE_ENDPOINT="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/tags/v${TARGET_VERSION}"
+else
+  info "Fetching latest release information…"
+  RELEASE_ENDPOINT="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest"
+fi
+
 AUTH_HEADER=""
 if [[ -n "${GITHUB_TOKEN:-}" ]]; then
   AUTH_HEADER="Authorization: token $GITHUB_TOKEN"
 fi
 
 api_json=$(curl -sSLH "Accept: application/vnd.github+json" ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
-  "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest")
+  "$RELEASE_ENDPOINT")
 
-latest_tag=$(jq -r '.tag_name' <<<"$api_json")
-if [[ "$latest_tag" == "null" || -z "$latest_tag" ]]; then
-  error "Unable to retrieve latest version tag"; exit 1
+# Tag not found
+if jq -e 'has("message") and .message=="Not Found"' >/dev/null <<<"$api_json"; then
+  error "Release v${TARGET_VERSION} does not exist"; exit 1
 fi
-latest_version="${latest_tag#v}"
+
+tag=$(jq -r '.tag_name' <<<"$api_json")
+if [[ "$tag" == "null" || -z "$tag" ]]; then
+  error "Unable to retrieve version tag"; exit 1
+fi
+latest_version="${tag#v}"
 tgz_name="${IMAGE_NAME}-${latest_version}.tgz"
 
 # ──────────────────────────────────────────────────────────────
