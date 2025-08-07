@@ -133,9 +133,24 @@ We recommend running the server on an Ubuntu system with a minimum of 2 logical 
 
 ## Download the Server Software
 
+The following command uses `wget` to download the latest self-extracting installer, make it executable, and run it.  We recommend running
+this command from your user's home directory or `/opt`.
 
+```bash
+ wget -q -O polarity-slack-bot.run https://github.com/polarityio/polarity-slack-bot/releases/latest/download/polarity-slack-bot.run && chmod +x     
+ polarity-slack-bot.run && ./polarity-slack-bot.run
+```
+
+If you do not have `wget` you can use the following command which uses `curl` to do the same:
+
+```bash
+curl -sL https://github.com/polarityio/polarity-slack-bot/releases/latest/download/polarity-slack-bot.run -o polarity-slack-bot.run && chmod +x    
+ polarity-slack-bot.run && ./polarity-slack-bot.run
+```
 
 ### Configure .env file
+
+Once the software is downloaded you will need to setup your `.env` file.
 
 1. Copy the `.env.example` file into a `.env` file
 
@@ -172,9 +187,11 @@ Additional supported environment variables are documented in the `.env.example` 
 
 ---
 
-## Download the Polarity Slack Bot Docker Image
+## Install/Update the Polarity Slack Bot Docker Image
 
-Run the `./update-bot.sh` script to fetch the latest release of the Polarity Slack Bot from the GitHub releases page.  The script will check if the polarity-slack-bot image is installed, if not, it will prompt you to download and install the latest image.  If the image is already installed then it will check for updates and prompt you to update.
+Run the `./update-bot.sh` script to fetch the latest release of the Polarity Slack Bot from the GitHub releases page if the image is not already downloaded.
+
+The `./update-bot.sh` script will check if the polarity-slack-bot image is installed, if not, it will prompt you to download and install the latest image.  If the image is already installed then it will check for updates and prompt you to update.
 
 ```
 ./update-bot.sh
@@ -193,8 +210,6 @@ The `--detach` flag runs the container in the background.  You can view the cont
 ```
 docker ps
 ```
-
-
 
 Common flags:
 
@@ -240,7 +255,11 @@ If you'd like to build a local docker image instead of using an official release
 ./start-bot.sh --build-local
 ```
 
-This will build a docker image called `polarity-slack-bot-dev`.
+This will build and run a docker image called `polarity-slack-bot-dev`.  For this to work you must download the full source code from the GitHub repo.  We recommend using `git` to do this:
+
+```
+git clone https://github.com/polarityio/polarity-slack-bot.git
+```
 
 If you prefer running locally without Docker you can install the Node dependencies and start the server:
 
