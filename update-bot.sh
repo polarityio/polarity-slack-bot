@@ -176,3 +176,4 @@ info "Tagging image as latest…"
 docker tag "${IMAGE_NAME}:${latest_version}" "${IMAGE_NAME}:latest"
 
 info "Done! ${IMAGE_NAME}:${latest_version} is ready."
+info "Start Polarity Slack Bot with: ./start-bot.sh"

@@ -66,7 +66,10 @@ fi
 info "Extracting Polarity Slack Bot bundle…"
 tar -xzf "$payload"
 chmod u+x polarity-slack-bot/*.sh
-info "Done.  cd polarity-slack-bot && ./update-bot.sh"
+info "Done."
+info "----- Next Steps ------"  
+info "cd polarity-slack-bot && ./update-bot.sh"
+info "-----------------------"
 exit 0
 
 # ── embedded data below ────────────────────────────────────────────

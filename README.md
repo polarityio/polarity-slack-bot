@@ -94,7 +94,7 @@ Connect your Slack workspace to [Polarity](https://threatconnect.com/polarity-by
 ### Add App Level Token 
 1. Click on "Basic Information" and scroll down to "App-Level Tokens". 
 2. Click on "Generate Token and Scopes"
-3. Add a token name.  For example, ""
+3. Add a token name.  For example, "polarity-slack-bot-app-token"
 4. Add the Scope "connections:write"
 5. Click "Generate"
 6. Copy the generated token which should start with "xapp-".  This token is your `POLARITY_SLACK_BOT_APP_TOKEN` environment variable value.
@@ -164,6 +164,13 @@ Finally, execute the installer:
 ```
 
 The self extracting installer will run an integrity check using cosign.  This requires network access to the GitHub Container Registry so the installer can run a containerized version of cosign to validate the installer.  If cosign cannot be run, the container will fall back to doing a sha256 checksum validation.
+
+Once the installer has extracted itself change into the `polarity-slack-bot` directory and run the `./update-bot.sh` script.  This script will install the Polarity Slack Bot docker image:
+
+```bash
+cd polarity-slack-bot
+./update-bot.sh
+```
 
 ### Configure .env file
 
