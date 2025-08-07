@@ -4,7 +4,7 @@
 # Uses ts-node via the existing “npm start” script.
 # Pass your env-vars with:  docker run --env-file .env polarity-bot
 # ──────────────────────────────────────────────────────────────
-FROM node:24-alpine
+FROM node:24-slim
 WORKDIR /app
 
 # Install dependencies first (cached layer)
