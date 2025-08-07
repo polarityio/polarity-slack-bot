@@ -70,8 +70,8 @@ info "Done.  cd polarity-slack-bot && ./update-bot.sh"
 exit 0
 
 # ── embedded data below ────────────────────────────────────────────
-${SIG_BEGIN}
-${SIG_END}
-${CRT_BEGIN}
-${CRT_END}
-${ARCHIVE_MARK}
+__SIG_BEGIN__
+__SIG_END__
+__CRT_BEGIN__
+__CRT_END__
+__ARCHIVE_BEGIN__
