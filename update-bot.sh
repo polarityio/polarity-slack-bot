@@ -64,6 +64,7 @@ if [[ -f "$LOCAL_IMAGE_TGZ" && -f "$LOCAL_SHA" ]]; then
     docker tag "${IMAGE_NAME}:${latest_version}" "${IMAGE_NAME}:latest"
 
     info "Done! ${IMAGE_NAME}:${latest_version} is ready."
+    info "Start Polarity Slack Bot with: ./start-bot.sh"
     exit 0
   else
     warn "Cached image checksum failed – downloading fresh copy…"
