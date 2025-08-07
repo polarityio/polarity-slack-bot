@@ -14,10 +14,12 @@ CRT_END="__CRT_END__"
 EXPECTED_SHA256="@@PAYLOAD_SHA256@@"
 
 SKIP_VERIFY=0
+CLEANUP=1
 for arg in "$@"; do
   case "$arg" in
     --no-signature-verification) SKIP_VERIFY=1 ;;
-    -h|--help) echo "usage: $0 [--no-signature-verification]"; exit 0 ;;
+    --no-cleanup)                CLEANUP=0      ;;
+    -h|--help) echo "usage: $0 [--no-signature-verification] [--no-cleanup]"; exit 0 ;;
     *) echo "Unknown flag: $arg"; exit 1 ;;
   esac
 done
@@ -25,7 +27,11 @@ done
 SELF="$0"
 workdir=$(mktemp -d)
 chmod 755 "$workdir"     # allow container user to access the directory
-trap 'rm -rf "$workdir"' EXIT
+if [[ $CLEANUP -eq 1 ]]; then
+  trap 'rm -rf "$workdir"' EXIT
+else
+  warn "Temporary files kept in $workdir ( --no-cleanup )"
+fi
 
 # ── extract embedded sig & cert ─────────────────────────────────────
 extract_block() { awk "/^$1\$/ {f=1;next} /^$2\$/ {f=0} f" "$SELF" > "$3"; }
