@@ -33,7 +33,7 @@ extract_block "$CRT_BEGIN" "$CRT_END" "$workdir/installer.pem"
 
 # ── extract payload tar.gz ──────────────────────────────────────────
 payload="$workdir/payload.tgz"
-pl=$(grep -n "^${ARCHIVE_MARK}\$" "$SELF" | cut -d: -f1)
+pl=$(grep -a -n "^${ARCHIVE_MARK}\$" "$SELF" | cut -d: -f1)
 tail -n +"$((pl+1))" "$SELF" > "$payload"
 
 # ── integrity verification ─────────────────────────────────────────
