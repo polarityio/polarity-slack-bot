@@ -14,6 +14,8 @@ set -euo pipefail
 REPO_OWNER="polarityio"
 REPO_NAME="polarity-slack-bot"
 IMAGE_NAME="polarity-slack-bot"
+# Absolute path to this script’s directory
+SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 info()  { echo -e "\033[1;34m[INFO]\033[0m  $*"; }
 warn()  { echo -e "\033[1;33m[WARN]\033[0m  $*"; }
@@ -43,6 +45,30 @@ if [[ "$latest_tag" == "null" || -z "$latest_tag" ]]; then
 fi
 latest_version="${latest_tag#v}"
 tgz_name="${IMAGE_NAME}-${latest_version}.tgz"
+
+# ──────────────────────────────────────────────────────────────
+# Check for cached image matching latest version
+# ──────────────────────────────────────────────────────────────
+LOCAL_IMAGE_DIR="${SCRIPT_DIR}/docker-images"
+LOCAL_IMAGE_TGZ="${LOCAL_IMAGE_DIR}/${IMAGE_NAME}-${latest_version}.image.tgz"
+LOCAL_SHA="${LOCAL_IMAGE_TGZ}.sha256"
+
+if [[ -f "$LOCAL_IMAGE_TGZ" && -f "$LOCAL_SHA" ]]; then
+  if (cd "$LOCAL_IMAGE_DIR" && sha256sum -c "$(basename "$LOCAL_SHA")" >/dev/null 2>&1); then
+    info "Using cached Docker image version ${latest_version} located in docker-images/ (checksum OK) – no download needed."
+
+    info "Loading Docker image (this may take a moment)…"
+    gzip -dc "$LOCAL_IMAGE_TGZ" | docker load
+
+    info "Tagging image as latest…"
+    docker tag "${IMAGE_NAME}:${latest_version}" "${IMAGE_NAME}:latest"
+
+    info "Done! ${IMAGE_NAME}:${latest_version} is ready."
+    exit 0
+  else
+    warn "Cached image checksum failed – downloading fresh copy…"
+  fi
+fi
 download_url=$(jq -r --arg FILE "$tgz_name" '.assets[] | select(.name==$FILE) | .browser_download_url' <<<"$api_json")
 
 if [[ -z "$download_url" ]]; then
@@ -139,8 +165,8 @@ info "Loading Docker image (this may take a moment)…"
 gzip -dc "$image_tgz" | docker load
 
 # If running from a local installation (bundle extracted), refresh docker-images/
-if [[ -d "${SCRIPT_DIR}/../docker-images" ]]; then
-  dest_dir="${SCRIPT_DIR}/../docker-images"
+if [[ -d "${SCRIPT_DIR}/docker-images" ]]; then
+  dest_dir="${SCRIPT_DIR}/docker-images"
   info "Updating local docker-images directory…"
   rm -f "${dest_dir}"/*.tgz
   cp "$image_tgz" "$dest_dir/"
