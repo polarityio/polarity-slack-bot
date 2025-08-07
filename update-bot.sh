@@ -69,8 +69,10 @@ api_json=$(curl -sSLH "Accept: application/vnd.github+json" ${AUTH_HEADER:+-H "$
   "$RELEASE_ENDPOINT")
 
 # Tag not found
-if jq -e 'has("message") and .message=="Not Found"' >/dev/null <<<"$api_json"; then
-  error "Release v${TARGET_VERSION} does not exist"; exit 1
+# (use .message? to avoid jq parse errors if key is absent)
+if jq -e '.message? == "Not Found"' >/dev/null <<<"$api_json"; then
+  ver=${TARGET_VERSION:-"requested"}
+  error "Release v${ver} does not exist"; exit 1
 fi
 
 tag=$(jq -r '.tag_name' <<<"$api_json")
