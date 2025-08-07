@@ -57,7 +57,10 @@ jobs:
         run: docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
       - name: Save image to compressed tarball
-        run: docker save $IMAGE_NAME:$IMAGE_TAG | gzip > $IMAGE_TAR
+        run: |
+          docker save $IMAGE_NAME:$IMAGE_TAG | gzip > "$IMAGE_TAR"
+          # create checksum so update-bot can validate cached copy
+          sha256sum "$IMAGE_TAR" > "$IMAGE_TAR.sha256"
 
       # ──────────────────────────────────────────────────────────────
       # 3a. Build full install bundle (scripts + image)
@@ -67,8 +70,8 @@ jobs:
           mkdir -p "$BUNDLE_DIR/docker-images"
           # copy helper scripts & docs
           cp README.md start-bot.sh stop-bot.sh uninstall-bot.sh update-bot.sh .env.example LICENSE Dockerfile "$BUNDLE_DIR"/
-          # move docker image into sub-dir
-          mv "$IMAGE_TAR" "$BUNDLE_DIR/docker-images/"
+          # move docker image and its checksum into sub-dir
+          mv "$IMAGE_TAR" "$IMAGE_TAR.sha256" "$BUNDLE_DIR/docker-images/"
           # pack everything
           tar -czf "$TAR_FILE" "$BUNDLE_DIR"
 
