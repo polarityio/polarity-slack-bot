@@ -43,7 +43,12 @@ jobs:
       - name: Prepare env
         run: |
           echo "IMAGE_TAG=${{ steps.pkg.outputs.version }}" >> $GITHUB_ENV
+          # tarball that holds only the docker image
+          echo "IMAGE_TAR=${{ env.IMAGE_NAME }}-${{ steps.pkg.outputs.version }}.image.tgz" >> $GITHUB_ENV
+          # final install bundle (keeps same naming convention)
           echo "TAR_FILE=${{ env.IMAGE_NAME }}-${{ steps.pkg.outputs.version }}.tgz" >> $GITHUB_ENV
+          # directory placed at archive root
+          echo "BUNDLE_DIR=polarity-slack-bot" >> $GITHUB_ENV
 
       # ──────────────────────────────────────────────────────────────
       # 3. Build & save Docker image
@@ -52,10 +57,23 @@ jobs:
         run: docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
       - name: Save image to compressed tarball
-        run: docker save $IMAGE_NAME:$IMAGE_TAG | gzip > $TAR_FILE
+        run: docker save $IMAGE_NAME:$IMAGE_TAG | gzip > $IMAGE_TAR
 
       # ──────────────────────────────────────────────────────────────
-      # 3a. Produce SHA-256 checksum (fallback integrity check)
+      # 3a. Build full install bundle (scripts + image)
+      # ──────────────────────────────────────────────────────────────
+      - name: Create install bundle
+        run: |
+          mkdir -p "$BUNDLE_DIR/docker-images"
+          # copy helper scripts & docs
+          cp README.md start-bot.sh stop-bot.sh uninstall-bot.sh update-bot.sh .env.example LICENSE Dockerfile "$BUNDLE_DIR"/
+          # move docker image into sub-dir
+          mv "$IMAGE_TAR" "$BUNDLE_DIR/docker-images/"
+          # pack everything
+          tar -czf "$TAR_FILE" "$BUNDLE_DIR"
+
+      # ──────────────────────────────────────────────────────────────
+      # 3b. Produce SHA-256 checksum (fallback integrity check)
       # ──────────────────────────────────────────────────────────────
       - name: Generate checksum
         run: sha256sum "$TAR_FILE" > "$TAR_FILE.sha256"
