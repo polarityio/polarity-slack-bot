@@ -57,10 +57,23 @@ jobs:
         run: docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
       - name: Save image to compressed tarball
-        run: docker save $IMAGE_NAME:$IMAGE_TAG | gzip > $TAR_FILE
+        run: docker save $IMAGE_NAME:$IMAGE_TAG | gzip > $IMAGE_TAR
 
       # ──────────────────────────────────────────────────────────────
-      # 3a. Produce SHA-256 checksum (fallback integrity check)
+      # 3a. Build full install bundle (scripts + image)
+      # ──────────────────────────────────────────────────────────────
+      - name: Create install bundle
+        run: |
+          mkdir -p "$BUNDLE_DIR/docker-images"
+          # copy helper scripts & docs
+          cp README.md start-bot.sh stop-bot.sh uninstall-bot.sh update-bot.sh .env.example LICENSE Dockerfile "$BUNDLE_DIR"/
+          # move docker image into sub-dir
+          mv "$IMAGE_TAR" "$BUNDLE_DIR/docker-images/"
+          # pack everything
+          tar -czf "$TAR_FILE" "$BUNDLE_DIR"
+
+      # ──────────────────────────────────────────────────────────────
+      # 3b. Produce SHA-256 checksum (fallback integrity check)
       # ──────────────────────────────────────────────────────────────
       - name: Generate checksum
         run: sha256sum "$TAR_FILE" > "$TAR_FILE.sha256"
