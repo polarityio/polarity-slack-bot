@@ -43,7 +43,12 @@ jobs:
       - name: Prepare env
         run: |
           echo "IMAGE_TAG=${{ steps.pkg.outputs.version }}" >> $GITHUB_ENV
+          # tarball that holds only the docker image
+          echo "IMAGE_TAR=${{ env.IMAGE_NAME }}-${{ steps.pkg.outputs.version }}.image.tgz" >> $GITHUB_ENV
+          # final install bundle (keeps same naming convention)
           echo "TAR_FILE=${{ env.IMAGE_NAME }}-${{ steps.pkg.outputs.version }}.tgz" >> $GITHUB_ENV
+          # directory placed at archive root
+          echo "BUNDLE_DIR=polarity-slack-bot" >> $GITHUB_ENV
 
       # ──────────────────────────────────────────────────────────────
       # 3. Build & save Docker image

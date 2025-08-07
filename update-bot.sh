@@ -125,8 +125,26 @@ else
   (cd "$tmp_dir" && sha256sum -c "$(basename "$checksum_path")") || { error "Checksum verification failed!"; exit 1; }
 fi
 
+info "Extracting bundle…"
+bundle_extract="$tmp_dir/bundle"
+mkdir -p "$bundle_extract"
+tar -xzf "$tgz_path" -C "$bundle_extract"
+
+image_tgz=$(find "$bundle_extract"/polarity-slack-bot/docker-images -name '*.tgz' | head -n1)
+if [[ -z "$image_tgz" ]]; then
+  error "Docker image not found inside bundle"; exit 1
+fi
+
 info "Loading Docker image (this may take a moment)…"
-gzip -dc "$tgz_path" | docker load
+gzip -dc "$image_tgz" | docker load
+
+# If running from a local installation (bundle extracted), refresh docker-images/
+if [[ -d "${SCRIPT_DIR}/../docker-images" ]]; then
+  dest_dir="${SCRIPT_DIR}/../docker-images"
+  info "Updating local docker-images directory…"
+  rm -f "${dest_dir}"/*.tgz
+  cp "$image_tgz" "$dest_dir/"
+fi
 
 info "Tagging image as latest…"
 docker tag "${IMAGE_NAME}:${latest_version}" "${IMAGE_NAME}:latest"
