@@ -133,24 +133,41 @@ We recommend running the server on an Ubuntu system with a minimum of 2 logical 
 
 ## Download the Server Software
 
-The following command uses `wget` to download the latest self-extracting installer, make it executable, and run it.  We recommend running
-this command from your user's home directory or `/opt`.
+Navigate to the releases page of the GitHub repo and download the latest installer found here https://github.com/polarityio/polarity-slack-bot/releases/latest.  You can find the installer under the "Assets" section of the release. The installer has a `.run` extension.  As an example, the installer file will look like:
 
-```bash
- wget -q -O polarity-slack-bot.run https://github.com/polarityio/polarity-slack-bot/releases/latest/download/polarity-slack-bot.run && chmod +x     
- polarity-slack-bot.run && ./polarity-slack-bot.run
+```
+polarity-slack-bot-{{version}}.run
 ```
 
-If you do not have `wget` you can use the following command which uses `curl` to do the same:
+The full download URL for the installer will look like this:
+
+```
+https://github.com/polarityio/polarity-slack-bot/releases/download/v{{version}}/polarity-slack-bot-{{version}}.run
+```
+
+You can download the installer directly onto your server using `wget` or `curl`.
+
+We recommend running the installer from your user's home directory or `/opt`.
+
+## Run the downloaded installer
+
+Once the installer is downloaded you will need to make it executable:
 
 ```bash
-curl -sL https://github.com/polarityio/polarity-slack-bot/releases/latest/download/polarity-slack-bot.run -o polarity-slack-bot.run && chmod +x    
- polarity-slack-bot.run && ./polarity-slack-bot.run
+chmod u+x polarity-slack-bot-*.run
 ```
+
+Finally, execute the installer:
+
+```bash
+./polarity-slack-bot-*.run
+```
+
+The self extracting installer will run an integrity check using cosign.  This requires network access to the GitHub Container Registry so the installer can run a containerized version of cosign to validate the installer.  If cosign cannot be run, the container will fall back to doing a sha256 checksum validation.
 
 ### Configure .env file
 
-Once the software is downloaded you will need to setup your `.env` file.
+Once the software is downloaded you will need to set up your `.env` file.
 
 1. Copy the `.env.example` file into a `.env` file
 
