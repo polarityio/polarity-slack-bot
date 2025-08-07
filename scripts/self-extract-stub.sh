@@ -24,6 +24,7 @@ done
 
 SELF="$0"
 workdir=$(mktemp -d)
+chmod 755 "$workdir"     # allow container user to access the directory
 trap 'rm -rf "$workdir"' EXIT
 
 # ── extract embedded sig & cert ─────────────────────────────────────
