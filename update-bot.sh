@@ -211,5 +211,28 @@ fi
 info "Tagging image as latest…"
 docker tag "${IMAGE_NAME}:${latest_version}" "${IMAGE_NAME}:latest"
 
+# ──────────────────────────────────────────────────────────────
+# Offer to remove older polarity-slack-bot images
+# ──────────────────────────────────────────────────────────────
+old_images=($(docker images --format "{{.Repository}}:{{.Tag}}" "$IMAGE_NAME" \
+               | grep "^${IMAGE_NAME}:" \
+               | grep -v ":${latest_version}$" \
+               | grep -v ":latest$" || true))
+
+if [[ ${#old_images[@]} -gt 0 ]]; then
+  echo
+  warn "The following old ${IMAGE_NAME} images are still present:"
+  for img in "${old_images[@]}"; do
+    echo "  • $img"
+  done
+  read -r -p "Remove these old images to free disk space? [y/N] " reply
+  if [[ "$reply" =~ ^[Yy]$ ]]; then
+    info "Removing old images…"
+    for img in "${old_images[@]}"; do
+      docker image rm "$img" || warn "Could not remove $img"
+    done
+  fi
+fi
+
 info "Done! ${IMAGE_NAME}:${latest_version} is ready."
 info "Start Polarity Slack Bot with: ./start-bot.sh"
