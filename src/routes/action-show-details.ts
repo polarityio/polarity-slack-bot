@@ -78,22 +78,39 @@ async function actionShowDetails({
     }
   ];
 
-  // Slack limits a section's text to 3000 characters.
-  // Chunk the details into ~2900-char slices (leaving head-room) and render
-  // one section per slice so very large payloads are displayed fully.
+  // Slack limits: section text ≤ 3000 chars, modal ≤ 100 blocks.
+  // Use 2 900-char slices (head-room) and cap total blocks at 100. If the
+  // payload is bigger we append a “…truncated…” notice.
   const MAX_SECTION_TEXT = 2900;
+  const MAX_BLOCKS = 100; // inclusive of the header we already pushed
 
   const isCodeBlock = detailsText.startsWith('```') && detailsText.endsWith('```');
   // Remove the surrounding ``` fences when chunking, re-add per slice later.
   const rawText = isCodeBlock ? detailsText.slice(3, -3) : detailsText || '_No details found_';
 
-  for (let i = 0; i < rawText.length || i === 0; i += MAX_SECTION_TEXT) {
+  for (
+    let i = 0;
+    (i < rawText.length || i === 0) && blocks.length < MAX_BLOCKS - 1; // keep 1 slot for trunc-notice
+    i += MAX_SECTION_TEXT
+  ) {
     const slice = rawText.slice(i, i + MAX_SECTION_TEXT);
     const sectionText = isCodeBlock ? `\`\`\`${slice}\`\`\`` : slice || '_No details found_';
 
     blocks.push({
       type: 'section',
       text: { type: 'mrkdwn', text: sectionText }
+    });
+  }
+
+  // If there is still leftover text we could not render, add a warning block.
+  const renderedChars = (blocks.length - 1) * MAX_SECTION_TEXT; // minus header
+  if (rawText.length > renderedChars) {
+    blocks.push({
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: ':warning: Output truncated — too large to display fully in Slack.'
+      }
     });
   }
 
