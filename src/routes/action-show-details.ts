@@ -83,7 +83,7 @@ async function actionShowDetails({
   // payload is bigger we append a “…truncated…” notice.
   const MAX_SECTION_TEXT = 2900;
   const MAX_BLOCKS = 100; // inclusive of the header we already pushed
-  const MAX_TOTAL_TEXT = 230_000; // keep well below Slack's 250 KB limit
+  const MAX_TOTAL_TEXT = 100_000; // keep well below Slack's 250 KB limit
 
   const isCodeBlock = detailsText.startsWith('```') && detailsText.endsWith('```');
   // Remove the surrounding ``` fences when chunking, re-add per slice later.
