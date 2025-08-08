@@ -18,47 +18,49 @@ describe('ProgressBar', () => {
     sendMock = jest.fn(async () => TS) as unknown as jest.MockedFunction<SendFn>;
   });
 
-  test('posts an initial message then edits it on subsequent updates', async () => {
+  test('posts the first message only when progress advances, then edits', async () => {
     const bar = new ProgressBar({ send: sendMock, label: 'Processing', total: 10 });
 
-    await bar.update(0); // first render
+    // done = 0 should be ignored – nothing sent yet
+    await bar.update(0);
+    expect(sendMock).toHaveBeenCalledTimes(0);
+
+    // first real progress → first message
+    await bar.update(5);
     expect(sendMock).toHaveBeenCalledTimes(1);
-    expect(sendMock).toHaveBeenNthCalledWith(
-      1,
+    expect(sendMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        text: 'Processing 0/10',
+        text: 'Processing 5/10',
         blocks: expect.any(Array)
       })
     );
 
-    await bar.update(5); // edit existing message
+    // subsequent progress → edit existing message
+    await bar.update(8);
     expect(sendMock).toHaveBeenCalledTimes(2);
-    expect(sendMock).toHaveBeenNthCalledWith(
-      2,
+    expect(sendMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        text: 'Processing 5/10',
+        text: 'Processing 8/10',
         blocks: expect.any(Array),
         messageTimestamp: TS
       })
     );
   });
 
-  test('setLabel updates the descriptive label inline', async () => {
+  test('setLabel does not send another message when progress is unchanged', async () => {
     const bar = new ProgressBar({ send: sendMock, label: 'Old', total: 10 });
 
     await bar.update(3);
     await bar.setLabel('New');
 
-    expect(sendMock).toHaveBeenCalledTimes(2);
-    expect(sendMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({ text: 'New 3/10' })
-    );
+    // still only the initial send
+    expect(sendMock).toHaveBeenCalledTimes(1);
   });
 
   test('destroy deletes the message and further calls throw', async () => {
     const bar = new ProgressBar({ send: sendMock, label: 'Delete-me', total: 5 });
 
-    await bar.update(0);
+    await bar.update(1); // send first message
     await bar.destroy();
 
     expect(sendMock).toHaveBeenCalledTimes(2);
@@ -68,7 +70,7 @@ describe('ProgressBar', () => {
       messageTimestamp: TS
     });
 
-    await expect(bar.update(1)).rejects.toThrow('destroyed');
+    await expect(bar.update(2)).rejects.toThrow('destroyed');
   });
 
   test('constructor rejects non-positive totals', () => {
