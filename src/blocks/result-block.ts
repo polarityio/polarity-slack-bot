@@ -90,7 +90,10 @@ function buildBlocks(results: WithIntegrationInfo[], includeTitle: boolean): Kno
       if (result.hasDetails) {
         const payload = JSON.stringify({
           integrationId: result.integrationId,
-          entity
+          entity: {
+            value: entity.value,
+            type: entity.type
+          }
         });
 
         section.accessory = {
