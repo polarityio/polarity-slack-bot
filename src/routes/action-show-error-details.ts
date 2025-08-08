@@ -31,7 +31,7 @@ async function actionShowErrorDetails({
 
   const MAX_SECTION_TEXT = 2900;
   const MAX_BLOCKS = 100;      // Slack hard-limit
-  const MAX_TOTAL_TEXT = 230_000;
+  const MAX_TOTAL_TEXT = 100_000;
 
   const blocks: KnownBlock[] = [];
 
