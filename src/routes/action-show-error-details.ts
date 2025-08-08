@@ -29,22 +29,52 @@ async function actionShowErrorDetails({
     return chunks;
   }
 
-  const blocks: KnownBlock[] = fullText
-    ? chunk(fullText).map((part) => ({
+  const MAX_SECTION_TEXT = 2900;
+  const MAX_BLOCKS = 100;      // Slack hard-limit
+  const MAX_TOTAL_TEXT = 100_000;
+
+  const blocks: KnownBlock[] = [];
+
+  if (!fullText) {
+    blocks.push({
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text:
+          ':warning: These error details have expired and are no longer available.\n' +
+          'Please run the lookup again to view fresh error information.'
+      }
+    });
+  } else {
+    const raw = fullText.startsWith('```') && fullText.endsWith('```')
+      ? fullText.slice(3, -3)
+      : fullText;
+
+    let used = 0;
+
+    for (
+      let i = 0;
+      (i < raw.length || i === 0) && blocks.length < MAX_BLOCKS && used < MAX_TOTAL_TEXT;
+      i += MAX_SECTION_TEXT
+    ) {
+      const slice = raw.slice(i, i + MAX_SECTION_TEXT);
+      blocks.push({
         type: 'section',
-        text: { type: 'mrkdwn', text: '```' + part + '```' }
-      }))
-    : [
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text:
-              ':warning: These error details have expired and are no longer available.\n' +
-              'Please run the lookup again to view fresh error information.'
-          }
+        text: { type: 'mrkdwn', text: '```' + slice + '```' }
+      });
+      used += slice.length;
+    }
+
+    if (raw.length > used) {
+      blocks.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: ':warning: Output truncated — too large to display fully in Slack.'
         }
-      ];
+      });
+    }
+  }
 
   await client.views.open({
     trigger_id: (body as { trigger_id: string }).trigger_id,
