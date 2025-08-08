@@ -1,6 +1,7 @@
 import { AllMiddlewareArgs, SlackActionMiddlewareArgs } from '@slack/bolt';
 import { errorDetailsCache } from '../cache/error-details-cache';
 import type { KnownBlock } from '@slack/types';
+import { logger } from '../logger';
 
 /**
  * Opens a modal showing the raw metadata captured in {@link ApiError}.
@@ -13,10 +14,9 @@ async function actionShowErrorDetails({
 }: SlackActionMiddlewareArgs & AllMiddlewareArgs): Promise<void> {
   await ack();
 
-  const cacheId =
-    typeof (action as { value?: unknown }).value === 'string'
-      ? (action as { value: string }).value
-      : '';
+  const cacheId = typeof (action as { value?: unknown }).value === 'string' ? (action as { value: string }).value : '';
+
+  logger.debug({ cacheId }, 'Loading error from cache');
 
   const fullText = cacheId ? errorDetailsCache.load(cacheId) : undefined;
 

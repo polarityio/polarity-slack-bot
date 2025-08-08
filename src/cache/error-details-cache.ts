@@ -7,9 +7,9 @@ import { randomUUID } from 'node:crypto';
  */
 const TTL_SECONDS = 30 * 60; // 30 minutes
 
-const cache = new NodeCache<string>({
+const cache = new NodeCache({
   stdTTL: TTL_SECONDS,
-  checkperiod: 120,
+  checkperiod: 600,
   useClones: false
 });
 
