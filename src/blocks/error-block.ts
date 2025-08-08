@@ -31,8 +31,7 @@ function buildBlocks(
 ): KnownBlock[] {
   const blocks: KnownBlock[] = [];
   const jsonErr = err;
-  
-  
+
   const integrationHeader =
     integrationName || integrationAcronym
       ? `*${integrationName}*${integrationAcronym ? ` (${integrationAcronym})` : ''}\n`
@@ -67,10 +66,10 @@ function buildBlocks(
   }
 
   const stringifiedError = JSON.stringify(jsonErr.meta, null, 2);
-  
+
   const cacheId = errorDetailsCache.save(stringifiedError);
 
-  logger.debug({stringifiedError, cacheId}, 'Saving stringified error')
+  logger.debug({ stringifiedError, cacheId }, 'Saved stringified error to cache');
 
   section.accessory = {
     type: 'button',
