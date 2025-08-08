@@ -14,3 +14,4 @@ CONVENTIONS.md
 # Ignore Intellij directories and node modules
 .idea/
 node_modules/
+*.crt

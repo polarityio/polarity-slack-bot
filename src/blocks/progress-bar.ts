@@ -39,6 +39,8 @@ export class ProgressBar {
   #tsPromise: Promise<string> | undefined;
   #destroyed = false;
   #lastDone = 0;
+  /** Serialisation chain that keeps Slack updates in order */
+  #queuePromise: Promise<void> = Promise.resolve();
 
   constructor({ send, label, total, options }: ProgressBarConfig) {
     if (total <= 0) {
@@ -63,23 +65,30 @@ export class ProgressBar {
       throw new Error('`done` must be between 0 and total inclusive');
     }
 
-    this.#lastDone = done;
-
-    // First invocation → post initial message
-    if (!this.#tsPromise) {
-      this.#tsPromise = this.#send({
-        text: `${this.#label} ${done}/${this.#total}`,
-        blocks: ProgressBar.#buildBlocks(this.#label, done, this.#total, this.#width)
-      });
+    // Prevent race-conditions: ignore updates that would move the bar backwards
+    // or repeat the same value when a newer (larger) update is already sent.
+    if (done <= this.#lastDone) {
       return;
     }
+    this.#lastDone = done;
 
-    // Subsequent invocations → update existing message
-    const ts = await this.#tsPromise;
-    await this.#send({
-      text: `${this.#label} ${done}/${this.#total}`,
-      blocks: ProgressBar.#buildBlocks(this.#label, done, this.#total, this.#width),
-      messageTimestamp: ts
+    await this.#enqueue(async () => {
+      // First invocation → post initial message
+      if (!this.#tsPromise) {
+        this.#tsPromise = this.#send({
+          text: `${this.#label} ${done}/${this.#total}`,
+          blocks: ProgressBar.#buildBlocks(this.#label, done, this.#total, this.#width)
+        });
+        return;
+      }
+
+      // Subsequent invocations → update existing message
+      const ts = await this.#tsPromise;
+      await this.#send({
+        text: `${this.#label} ${done}/${this.#total}`,
+        blocks: ProgressBar.#buildBlocks(this.#label, done, this.#total, this.#width),
+        messageTimestamp: ts
+      });
     });
   }
 
@@ -118,6 +127,17 @@ export class ProgressBar {
     if (this.#destroyed) {
       throw new Error('ProgressBar instance has been destroyed – create a new one.');
     }
+  }
+
+  /**
+   * Queue `task` so that only one network call is in flight at a time and the
+   * calls execute strictly in the order they were issued.
+   */
+  async #enqueue(task: () => Promise<void>): Promise<void> {
+    const next = this.#queuePromise.then(task);
+    // Preserve the chain even if a task rejects
+    this.#queuePromise = next.catch(() => {});
+    return next;
   }
 
   static #buildBar(done: number, total: number, width: number): string {

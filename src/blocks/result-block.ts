@@ -77,7 +77,6 @@ function buildBlocks(results: WithIntegrationInfo[], includeTitle: boolean): Kno
           ? `*${integrationName}*${integrationAcronym ? ` (${integrationAcronym})` : ''}\n`
           : '';
 
-
       const summaryArr = (Array.isArray(result.data.summary) ? result.data.summary : []) as SummaryTag[];
       const summaryText =
         summaryArr.length > 0 ? summaryArr.map((tag) => `\`${getSummaryTagText(tag)}\``).join(' ') : '_No summary_';
@@ -91,7 +90,10 @@ function buildBlocks(results: WithIntegrationInfo[], includeTitle: boolean): Kno
       if (result.hasDetails) {
         const payload = JSON.stringify({
           integrationId: result.integrationId,
-          entity
+          entity: {
+            value: entity.value,
+            type: entity.type
+          }
         });
 
         section.accessory = {
@@ -117,11 +119,11 @@ function buildBlocks(results: WithIntegrationInfo[], includeTitle: boolean): Kno
 
 interface SummaryTagObject {
   text?: string;
+
   [key: string]: unknown;
 }
 
 type SummaryTag = string | SummaryTagObject;
-
 
 /**
  * Type guard ensuring a lookup result definitely contains data.

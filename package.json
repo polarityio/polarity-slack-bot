@@ -2,13 +2,14 @@
   "name": "polarity_slack_bot",
   "main": "src/app.ts",
   "private": true,
-  "version": "1.0.23",
+  "version": "1.0.25",
   "dependencies": {
     "@slack/bolt": "^4.4.0",
     "dotenv": "^16.5.0",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
-    "proxy-agent": "^6.5.0"
+    "proxy-agent": "^6.5.0",
+    "node-cache": "^5.1.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",

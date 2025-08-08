@@ -1,5 +1,7 @@
 import type { KnownBlock } from '@slack/types';
 import { ApiError, parseErrorToReadableJson } from '../errors/api-error';
+import { errorDetailsCache } from '../cache/error-details-cache';
+import { logger } from '../logger';
 
 export function buildErrorBlocksWithTitle(
   integrationName: string,
@@ -28,7 +30,8 @@ function buildBlocks(
   entityType: string = ''
 ): KnownBlock[] {
   const blocks: KnownBlock[] = [];
-  const jsonErr = parseErrorToReadableJson(err);
+  const jsonErr = err;
+
   const integrationHeader =
     integrationName || integrationAcronym
       ? `*${integrationName}*${integrationAcronym ? ` (${integrationAcronym})` : ''}\n`
@@ -62,6 +65,12 @@ function buildBlocks(
     jsonErr.meta.message = jsonErr.message;
   }
 
+  const stringifiedError = JSON.stringify(jsonErr.meta, null, 2);
+
+  const cacheId = errorDetailsCache.save(stringifiedError);
+
+  logger.debug({ stringifiedError, cacheId }, 'Saved stringified error to cache');
+
   section.accessory = {
     type: 'button',
     text: {
@@ -70,7 +79,7 @@ function buildBlocks(
       emoji: true
     },
     action_id: 'show_error_details',
-    value: JSON.stringify(jsonErr.meta, null, 2).slice(0, 2000) // Slack hard-limit
+    value: cacheId
   };
 
   blocks.push(section);

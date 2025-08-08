@@ -53,6 +53,20 @@ async function commandPolarity({ ack, command, client }: SlackCommandMiddlewareA
   // Bot is in the channel → acknowledge and proceed
   await ack();
 
+  // ────────────────────────────────────────────────────────────────────
+  // Enforce maximum input length (1200 characters).
+  // ────────────────────────────────────────────────────────────────────
+  if (searchText && searchText.length > 1200) {
+    await send({
+      text:
+        ':warning: Your search text is too long (limit = 1200 characters). ' +
+        'Please shorten it and try again.',
+      response_type: 'ephemeral',
+      userId: command.user_id
+    });
+    return;
+  }
+
   if (!searchText) {
     await send({
       text: 'Please provide search text after the command, e.g., `/polarity 8.8.8.8`',
@@ -369,10 +383,14 @@ async function respondGroupedEntities(
     blocks = blocks.concat(errorBlocks);
   }
 
-  await send({
-    text: 'Polarity results',
-    blocks
-  });
+  // Slack allows max 50 blocks per message → chunk & send multiple
+  const CHUNK_SIZE = 50;
+  for (let i = 0; i < blocks.length; i += CHUNK_SIZE) {
+    await send({
+      text: 'Polarity results',
+      blocks: blocks.slice(i, i + CHUNK_SIZE)
+    });
+  }
 }
 
 export default commandPolarity;
