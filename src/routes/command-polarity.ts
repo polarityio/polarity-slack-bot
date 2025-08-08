@@ -383,10 +383,14 @@ async function respondGroupedEntities(
     blocks = blocks.concat(errorBlocks);
   }
 
-  await send({
-    text: 'Polarity results',
-    blocks
-  });
+  // Slack allows max 50 blocks per message → chunk & send multiple
+  const CHUNK_SIZE = 50;
+  for (let i = 0; i < blocks.length; i += CHUNK_SIZE) {
+    await send({
+      text: 'Polarity results',
+      blocks: blocks.slice(i, i + CHUNK_SIZE)
+    });
+  }
 }
 
 export default commandPolarity;
