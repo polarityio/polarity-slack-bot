@@ -65,9 +65,9 @@ export class ProgressBar {
       throw new Error('`done` must be between 0 and total inclusive');
     }
 
-    // Prevent race-conditions: ignore updates that would move the bar backwards
-    // or repeat the same value when a newer (larger) update is already sent.
-    if (done <= this.#lastDone) {
+    // Prevent race-conditions: ignore stale or duplicate progress updates,
+    // but only *after* the initial bar message exists.
+    if (this.#tsPromise && done <= this.#lastDone) {
       return;
     }
     this.#lastDone = done;
