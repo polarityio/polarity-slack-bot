@@ -83,14 +83,19 @@ async function actionShowDetails({
   // payload is bigger we append a “…truncated…” notice.
   const MAX_SECTION_TEXT = 2900;
   const MAX_BLOCKS = 100; // inclusive of the header we already pushed
+  const MAX_TOTAL_TEXT = 230_000; // keep well below Slack's 250 KB limit
 
   const isCodeBlock = detailsText.startsWith('```') && detailsText.endsWith('```');
   // Remove the surrounding ``` fences when chunking, re-add per slice later.
   const rawText = isCodeBlock ? detailsText.slice(3, -3) : detailsText || '_No details found_';
 
+  let used = 0; // total characters inserted so far
+
   for (
     let i = 0;
-    (i < rawText.length || i === 0) && blocks.length < MAX_BLOCKS - 1; // keep 1 slot for trunc-notice
+    (i < rawText.length || i === 0) &&
+    blocks.length < MAX_BLOCKS - 1 && // keep 1 slot for trunc-notice
+    used < MAX_TOTAL_TEXT;
     i += MAX_SECTION_TEXT
   ) {
     const slice = rawText.slice(i, i + MAX_SECTION_TEXT);
@@ -100,11 +105,12 @@ async function actionShowDetails({
       type: 'section',
       text: { type: 'mrkdwn', text: sectionText }
     });
+
+    used += slice.length;
   }
 
   // If there is still leftover text we could not render, add a warning block.
-  const renderedChars = (blocks.length - 1) * MAX_SECTION_TEXT; // minus header
-  if (rawText.length > renderedChars) {
+  if (rawText.length > used) {
     blocks.push({
       type: 'section',
       text: {
