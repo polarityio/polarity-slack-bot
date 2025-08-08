@@ -53,6 +53,20 @@ async function commandPolarity({ ack, command, client }: SlackCommandMiddlewareA
   // Bot is in the channel → acknowledge and proceed
   await ack();
 
+  // ────────────────────────────────────────────────────────────────────
+  // Enforce maximum input length (1200 characters).
+  // ────────────────────────────────────────────────────────────────────
+  if (searchText && searchText.length > 1200) {
+    await send({
+      text:
+        ':warning: Your search text is too long (limit = 1200 characters). ' +
+        'Please shorten it and try again.',
+      response_type: 'ephemeral',
+      userId: command.user_id
+    });
+    return;
+  }
+
   if (!searchText) {
     await send({
       text: 'Please provide search text after the command, e.g., `/polarity 8.8.8.8`',
