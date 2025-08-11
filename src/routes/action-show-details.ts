@@ -4,6 +4,7 @@ import { logger } from '../logger';
 import { integrationService } from '../services/integration-service';
 import type { KnownBlock } from '@slack/types';
 import type { AllMiddlewareArgs, BlockAction, SlackActionMiddlewareArgs } from '@slack/bolt';
+import {reduceObject} from "../utils/object-reducer";
 
 /**
  * Opens a modal that displays the JSON `detailsText` when the user presses the
@@ -58,7 +59,7 @@ async function actionShowDetails({
     const match = freshResults.find((r) => r.entity.value === entity.value && r.entity.type === entity.type);
 
     if (match?.data?.details && Object.keys(match.data.details).length > 0) {
-      detailsText = '```' + JSON.stringify(match.data.details, null, 2) + '```';
+      detailsText = '```' + JSON.stringify(reduceObject(match.data.details), null, 2) + '```';
     }
   } catch (err) {
     logger.error({ err }, 'Failed to fetch fresh details');
