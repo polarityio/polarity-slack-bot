@@ -52,7 +52,7 @@ describe('reduceObject', () => {
 
     const expected = {
       g: 'valid',
-      h: [{ z: 'ok' }],
+      h: [{y: 42}, { z: 'ok' }],
       i: { k: 'ok' }
     };
 
@@ -69,7 +69,7 @@ describe('reduceObject', () => {
       e: [undefined, 1]
     };
 
-    const snapshot = JSON.parse(JSON.stringify(original));
+    const snapshot = structuredClone(original);
     reduceObject(original);
     expect(original).toEqual(snapshot);
   });
