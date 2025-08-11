@@ -21,23 +21,30 @@ describe('ProgressBar', () => {
   test('posts the first message only when progress advances, then edits', async () => {
     const bar = new ProgressBar({ send: sendMock, label: 'Processing', total: 10 });
 
-    // done = 0 should be ignored – nothing sent yet
+    // first update (0) posts the initial bar
     await bar.update(0);
-    expect(sendMock).toHaveBeenCalledTimes(0);
-
-    // first real progress → first message
-    await bar.update(5);
     expect(sendMock).toHaveBeenCalledTimes(1);
     expect(sendMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        text: 'Processing 5/10',
+        text: 'Processing 0/10',
         blocks: expect.any(Array)
       })
     );
 
     // subsequent progress → edit existing message
-    await bar.update(8);
+    await bar.update(5);
     expect(sendMock).toHaveBeenCalledTimes(2);
+    expect(sendMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        text: 'Processing 5/10',
+        blocks: expect.any(Array),
+        messageTimestamp: TS
+      })
+    );
+
+    // subsequent progress → edit existing message
+    await bar.update(8);
+    expect(sendMock).toHaveBeenCalledTimes(3);
     expect(sendMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         text: 'Processing 8/10',
